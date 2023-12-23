@@ -1,5 +1,9 @@
+import platform
+import random
+
+import requests
 from flet import \
-(
+    (
     Theme,
     Dropdown,
     dropdown,
@@ -8,10 +12,7 @@ from flet import \
     Row,
     Column
 )
-import subprocess as sp
-import random
-import requests
-import platform
+
 from .Navbar import nav_side as navbar
 
 node = ''
@@ -27,15 +28,14 @@ def init_page(page):
     page.window_width = 700
     page.window_height = 600
     page.fonts = {
-    "SHS_TC": "fonts/SourceHanSansTC-Regular.otf",
-    "SHS_SC": "fonts/SourceHanSansSC-Regular.otf"
+        "SHS_TC": "fonts/SourceHanSansTC-Regular.otf",
+        "SHS_SC": "fonts/SourceHanSansSC-Regular.otf"
     }
     page.theme = Theme(font_family="SHS_SC")
     page.update()
 
 
 def create_controls(page):
-
     def start_frpc(e):
 
         node_list = {
@@ -92,7 +92,7 @@ def create_controls(page):
             if sys_type.lower() in current_dict["name"] and "amd64" in current_dict["name"]:
                 download_url = current_dict["url"]
                 download_name = current_dict["name"]
-        
+
                 print(
                     f'''Donwload file name:{download_name}
                     Download file URL:{download_url}'''
@@ -139,5 +139,5 @@ def create_controls(page):
         txt_user,
         dd_protocol,
         ctrls_bottom])
-    ]))
+                           ]))
     page.update()

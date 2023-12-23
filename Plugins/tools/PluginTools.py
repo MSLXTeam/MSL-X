@@ -1,19 +1,20 @@
-from .InfoClasses import UniversalInfo
-from .Exceptions import WrongInfoTypeError, NullEntrypointError
-from lib.log import logger
 from typing import Optional
+
+from lib.log import logger
+from .Exceptions import WrongInfoTypeError, NullEntrypointError
+from .InfoClasses import UniversalInfo, InfoTypes
+from .PluginList import Pluginlist
 
 
 class AddPluginInfo:  # 接受通用信息类的新版修饰器
     def __init__(self, plugin_info: UniversalInfo):
-        if plugin_info.type == "Plugin":
+        if plugin_info.type == "Plugin" or plugin_info.type == InfoTypes.Plugin:
             self.plugin_info = plugin_info
         else:
             raise WrongInfoTypeError(plugin_info.name, plugin_info.type, "Plugin")
 
     def __call__(self, func: Optional[callable]):
-        global Pluginlist
-        TargetPlugin = {
+        target = {
             "Name": self.plugin_info.name,
             "Location": self.plugin_info.on,
             "EntryPoint": func if func is not None else self.check_entrypoint,
@@ -24,8 +25,8 @@ class AddPluginInfo:  # 接受通用信息类的新版修饰器
             'class': self.plugin_info
         }
         if self.plugin_info.args is not None:
-            TargetPlugin["args"] = self.plugin_info.args
-        Pluginlist.append(TargetPlugin)
+            target["args"] = self.plugin_info.args
+        Pluginlist.append(target)
         name = self.plugin_info.name
         location = self.plugin_info.on
         logger.info(f"已在{location}注册插件{name}")
@@ -47,8 +48,7 @@ class RegisterPlugin(object):  # 接受字典的老版本修饰器
 
     def __call__(self, func):
         logger.debug(f"装饰器被{func}Call了一次")
-        global Pluginlist
-        TargetPlugin = {
+        target = {
             "Name": self.plugin_info["name"],
             "Location": self.plugin_info["location"],
             "EntryPoint": func,
@@ -56,8 +56,8 @@ class RegisterPlugin(object):  # 接受字典的老版本修饰器
             'file': self.plugin_info['file'],
         }
         if args := self.plugin_info.get('args') is not None:
-            TargetPlugin["args"] = self.plugin_info['args']
-        Pluginlist.append(TargetPlugin)
-        name = TargetPlugin["Name"]
-        location = TargetPlugin["Location"]
+            target["args"] = self.plugin_info['args']
+        Pluginlist.append(target)
+        name = target["Name"]
+        location = target["Location"]
         logger.info(f"已注册插件{name},位置为{location}")

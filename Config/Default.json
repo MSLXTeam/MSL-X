@@ -1,1 +1,10 @@
-{"xms": 1, "xmx": 4, "java": "java", "server": "server", "path": "", "description": "", "jvm_options": [], "name": "Default"}
+{
+  "xms": 1,
+  "xmx": 4,
+  "java": "java",
+  "server": "server",
+  "path": "",
+  "description": "",
+  "jvm_options": [],
+  "name": "Default"
+}

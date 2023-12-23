@@ -36,6 +36,7 @@ info = UniversalInfo(...) # 按照下文的参数说明填写
 #### 使用
 
 假设你有以下代码:
+
 ```python
 def fool():
     print("WTF is this")

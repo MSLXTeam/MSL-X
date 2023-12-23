@@ -12,28 +12,28 @@
 <div id="app"></div>
 <script>
     window.$docsify = {
-      name: 'MSL-X Document',
-      basePath: "https://MSLXTeam.github.io/MSL-X//MSL-X/",
-      relativePath: true,
-      nameLink: {
-          '/': '/',
-          '/Developing/': '/Developing/',
-      },
-      repo: 'MojaveHao/MSL-X',
-      logo: 'logo_small.png',
-      notFoundPage: true,
-      coverpage: true,
-      loadSidebar: true,
-      loadNavbar: true,
-      search: {
-        maxAge: 86400000, // 过期时间，单位毫秒，默认一天
-        paths: 'auto',
-        placeholder: '在这里搜索',
-        noData: '找不到您要的东西呢...',
-        depth: 6,
-        hideOtherSidebarContent: false,
-        namespace: 'website-1'
-      }
+        name: 'MSL-X Document',
+        basePath: "https://MSLXTeam.github.io/MSL-X/",
+        relativePath: true,
+        nameLink: {
+            '/': '/',
+            '/Developing/': '/Developing/',
+        },
+        repo: 'MojaveHao/MSL-X',
+        logo: 'logo_small.png',
+        notFoundPage: true,
+        coverpage: true,
+        loadSidebar: true,
+        loadNavbar: true,
+        search: {
+            maxAge: 86400000, // 过期时间，单位毫秒，默认一天
+            paths: 'auto',
+            placeholder: '在这里搜索',
+            noData: '找不到您要的东西呢...',
+            depth: 6,
+            hideOtherSidebarContent: false,
+            namespace: 'website-1'
+        }
     }
 
 
@@ -45,7 +45,7 @@
 <script src="https://unpkg.com/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
 <script>
     if (typeof navigator.serviceWorker !== 'undefined') {
-      navigator.serviceWorker.register('sw.js')
+        navigator.serviceWorker.register('sw.js')
     }
 </script>
 <script src="https://unpkg.com/docsify/lib/plugins/search.min.js"></script>

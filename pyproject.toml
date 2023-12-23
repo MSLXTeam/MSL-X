@@ -5,7 +5,7 @@ description = ""
 authors = ["MojaveHao <HTTcode2020@126.com>"]
 license = "AGPL-3.0-only"
 readme = "README.md"
-packages = [{include = "msl_x"}]
+packages = [{ include = "msl_x" }]
 
 [tool.poetry.dependencies]
 flet = "^0.12.0"
@@ -17,6 +17,8 @@ pyperclip = "^1.8.2"
 pytoml = "^0.1.21"
 Requests = "^2.31.0"
 retry = "^0.9.2"
+rich = "^13.6.0"
+cmd2 = "^2.4.3"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,7 +1,9 @@
 import base64
-from Crypto.Cipher import PKCS1_v1_5
+
 from Crypto import Random
+from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
+
 
 # ------------------------生成密钥对------------------------
 def create_rsa_pair(is_save=False):
@@ -26,10 +28,12 @@ def read_public_key(file_path="crypto_public_key.pem") -> bytes:
         b = x.read()
         return b
 
+
 def read_private_key(file_path="crypto_private_key.pem") -> bytes:
     with open(file_path, "rb") as x:
         b = x.read()
         return b
+
 
 # ------------------------加密------------------------
 def RSA_encrypt(text: str, public_key: bytes):
@@ -42,6 +46,7 @@ def RSA_encrypt(text: str, public_key: bytes):
     # base64编码，并转为字符串
     text_encrypted_base64 = base64.b64encode(text_encrypted).decode()
     return text_encrypted_base64
+
 
 # ------------------------解密------------------------
 def RSA_decrypt(text_encrypted_base64: str, private_key: bytes):

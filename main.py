@@ -29,15 +29,6 @@ from flet import (
 )
 
 import PluginEntry
-from ui import (
-    confcl,
-    frpconfig,
-    logs,
-    nginxconf,
-    settings
-)
-from ui.Navbar import nav_side as navbar
-
 from lib.Decorators import (
     MSLXEvents,
     EventHandler,
@@ -53,7 +44,14 @@ from lib.crypt.AES import AES_encrypt
 from lib.crypt.RSA import RSA_encrypt
 from lib.info_classes import ProgramInfo
 from lib.log import logger
-
+from ui import (
+    confcl,
+    frpconfig,
+    logs,
+    nginxconf,
+    settings
+)
+from ui.Navbar import nav_side as navbar
 
 if TYPE_CHECKING:
     from flet import Page
@@ -74,10 +72,6 @@ def main(page: 'Page'):
     for dir_name in create_dirs:
         if not os.path.exists(dir_name):
             os.mkdir(dir_name)
-
-    if not os.path.exists("Config/__init__.py"):
-        with open('__init__.py', 'w') as f:
-            f.write('')
 
     def init_page():
 
@@ -114,7 +108,7 @@ def main(page: 'Page'):
             try:
                 func(fe)
             except Exception as e:
-                logger.error(f"执行StartServerEvents时出现错误:{e}")
+                logger.error(f"执行StartServerEvent时出现错误:{e}")
             else:
                 break
 

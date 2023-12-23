@@ -1,14 +1,7 @@
 import inspect
+from enum import Enum
 from threading import Thread
 from typing import Optional, Union
-from enum import Enum
-
-handlers = {
-    "StartServerEvent": [],
-    "SelectHomepageEvent": [],
-    "SelectFrpcPageEvent": [],
-    "SelectAboutPageEvent": [],
-}
 
 
 class MSLXEvents(Enum):  # 事件类型枚举
@@ -27,6 +20,14 @@ class InfoTypes(Enum):  # 信息类型枚举
     EventHandler = "EventHandler"
     Event = "Event"
     Command = "Command"
+
+
+handlers = {
+    MSLXEvents.StartServerEvent.value: [],
+    MSLXEvents.SelectHomepageEvent.value: [],
+    MSLXEvents.SelectFrpcPageEvent.value: [],
+    MSLXEvents.SelectAboutPageEvent.value: [],
+}
 
 
 class UniversalInfo:  # 通用信息类
@@ -49,7 +50,7 @@ class UniversalInfo:  # 通用信息类
         self.on = on
         self.file = file
         self.need_args = []
-        if isinstance(type_of_info, InfoTypes):
+        if isinstance(type_of_info, MSLXEvents):
             self.type = type_of_info.value
         else:
             self.type = type_of_info

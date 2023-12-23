@@ -10,7 +10,7 @@
 
 操作系统(适用于Arch特编部分): **Archlinux** / Manjaro
 
-包管理器(普通部分): **apt** / dpkg 
+包管理器(普通部分): **apt** / dpkg
 
 包管理器(适用于Arch特编部分): **pacman** / paru
 
@@ -34,40 +34,40 @@
 
   现在请您先输入```python --version```查看现存Python版本，3.10以下都不可以运行
 
-- 如果您是Python2.x，请在终端输入sudo apt remove --auto-remove python2.x 来移除Python2(把x换成后面的版本号)，然后按照Python3.x-Python3.10以下处理
-- 如果您是Python3.x: 
+- 如果您是Python2.x，请在终端输入sudo apt remove --auto-remove python2.x 来移除Python2(把x换成后面的版本号)
+  ，然后按照Python3.x-Python3.10以下处理
+- 如果您是Python3.x:
 
-  - Python3.10及以上可以直接跳到下载运行环境一节
+    - Python3.10及以上可以直接跳到下载运行环境一节
 
-  - Python3.10以下可以选择按下面的方式**升级**到Python3.10
-  
-    - 下载
-    
-    ```bash
-    sudo apt install python3.10
-    ```
-    
-    - 将软链接指向python3.10(可选)
-    
-      > 删除原有链接
+    - Python3.10以下可以选择按下面的方式**升级**到Python3.10
+
+        - 下载
+
       ```bash
-      rm /usr/bin/python
+      sudo apt install python3.10
       ```
 
-      > 找到python3的安装路径
-      ```bash
-      which python3
-      ```
-      
-      > 建立新的软链接
-      ```bash
-      ln -s (上面的路径) /usr/bin/python
-      ```
-      
+        - 将软链接指向python3.10(可选)
+
+          > 删除原有链接
+          ```bash
+          rm /usr/bin/python
+          ```
+
+          > 找到python3的安装路径
+          ```bash
+          which python3
+          ```
+
+          > 建立新的软链接
+          ```bash
+          ln -s (上面的路径) /usr/bin/python
+          ```
 
 #### Arch特编
 
-##### 您只需要运行以下命令，便可安装Python3.10: 
+##### 您只需要运行以下命令，便可安装Python3.10:
 
 ``pacman -S python``
 
@@ -77,21 +77,21 @@
 - 由于最新版本的Arch Linux已经停止了Python3.7以前版本的支持，本文不做说明
 - 如果您希望使用Python311，请您使用AUR:
 
-  - 使用paru
+    - 使用paru
 
-    - 安装
-    
-    ```bash
-    sudo pacman -S paru-git
-    ```
+        - 安装
 
-    - 使用
+      ```bash
+      sudo pacman -S paru-git
+      ```
 
-      - 它的语法和pacman一致。
-      - 示例: 您可以通过以下语句来安装Python3.11:
-        ```bash
-        paru -S python311
-        ```
+        - 使用
+
+            - 它的语法和pacman一致。
+            - 示例: 您可以通过以下语句来安装Python3.11:
+              ```bash
+              paru -S python311
+              ```
 
 ### 安装依赖
 
@@ -128,14 +128,15 @@
 # 基本使用方法
 
 - 开启服务器
-  - 在主界面点击“开启服务器”即可
-  - 注意事项
-    - 必须事先选择服务端路径和服务端（服务端没有可以点击服务端路径和“...”选择路径中间的下载摁钮下载）
-    - 必须配置好对应版本的Java,不知道如何配置可以点击主页下方的“如何选择”查看帮助
+    - 在主界面点击“开启服务器”即可
+    - 注意事项
+        - 必须事先选择服务端路径和服务端（服务端没有可以点击服务端路径和“...”选择路径中间的下载摁钮下载）
+        - 必须配置好对应版本的Java,不知道如何配置可以点击主页下方的“如何选择”查看帮助
 - 配置服务器
-  - 主页提供了常用的服务器设置，如是否开启PVP，最大在线人数等
-  - 进阶设置可以在服务端路径下的server.properties修改，每个选项的释义可以在[这里](#server.properties中部分常用配置翻译)查看
-  - 服务端目录结构，开服前准备都可以在主界面-帮助查看
+    - 主页提供了常用的服务器设置，如是否开启PVP，最大在线人数等
+    - 进阶设置可以在服务端路径下的server.properties修改，每个选项的释义可以在[这里](#server.properties中部分常用配置翻译)
+      查看
+    - 服务端目录结构，开服前准备都可以在主界面-帮助查看
 
 # 进阶设置和疑难解答
 
@@ -210,7 +211,8 @@
 
 #### 什么是Nginx
 
-Nginx (读作"engine X") 由Igor Sysoev(俄)于2005年编写，是一个免费、开源、高性能的HTTP服务器和反向代理，也可以作为一个IMAP/POP3代理服务器。Nginx因为稳定，丰富的功能集，配置简单，资源占用低而闻名世界。
+Nginx (读作"engine X") 由Igor Sysoev(俄)
+于2005年编写，是一个免费、开源、高性能的HTTP服务器和反向代理，也可以作为一个IMAP/POP3代理服务器。Nginx因为稳定，丰富的功能集，配置简单，资源占用低而闻名世界。
 
 #### 安装
 
@@ -228,7 +230,8 @@ sudo systemctl status nginx
 ###### 下载依赖
 
 - ``sudo apt install build-essential libpcre3 libpcre3-dev zlib1g-dev unzip git openssl libssl-dev``
-- 访问[Nginx官网下载地址](https://nginx.org/en/download.html)，下载最新Mainline版本的Nginx。截至这篇文章编写(2023/8/22)，最新Mainline版本为1.25.2，本篇将以这个版本作示例。
+- 访问[Nginx官网下载地址](https://nginx.org/en/download.html)，下载最新Mainline版本的Nginx。截至这篇文章编写(2023/8/22)
+  ，最新Mainline版本为1.25.2，本篇将以这个版本作示例。
 - ```bash
   curl -O https://nginx.org/download/nginx-1.25.2.tar.gz &&  tar -zxvf nginx-1.25.2.tar.gz
   ```
@@ -236,13 +239,13 @@ sudo systemctl status nginx
   > 可选组件
   >
 
-  - OpenSSL
+    - OpenSSL
 
   ```bash
   curl -O https://www.openssl.org/source/openssl-3.1.2.tar.gz && tar -zxvf openssl-3.1.2.tar.gz
   ```
 
-  - Brotli
+    - Brotli
 
   ```bash
   git clone https://github.com/google/ngx_brotli.git
@@ -267,7 +270,8 @@ cd nginx-1.25.2
 
 > 编译
 
-> user和group分别为用户和用户组，需要自己根据本机情况替换。如果需要指定安装目录和配置文件目录可以分别指定 ``--prefix``和 ``--conf-path``参数。
+> user和group分别为用户和用户组，需要自己根据本机情况替换。如果需要指定安装目录和配置文件目录可以分别指定 ``--prefix``
+> 和 ``--conf-path``参数。
 > Nginx默认的安装目录为/usr/local/nginx/，配置文件为/usr/local/nginx/conf/nginx.conf。
 
 ```bash
@@ -304,7 +308,7 @@ nginx -V
 ##### 编译安装
 
 Archlinux下编译安装的方法基本和Ubuntu一致。
-可以这么启动nginx: 
+可以这么启动nginx:
 
 ```bash
 cd /usr/local/nginx/sbin && ./nginx
@@ -333,11 +337,18 @@ __不鼓励且不支持所有商业用途__
 
 衍生软件**需要**声明引用
 如果在**没有修改**的情况下引用了 MSL-X 分发包，则派生项目应在描述的任何位置**提及 MSLX 的使用**。
-如果修改并重新发布 MSL-X 源代码，或发布其他项目参考 MSL-X 的内部实现，则**必须**在文章开头或MSLX相关内容**最先出现**（https://github.com/MojaveHao/MSL-X）。 __不得歪曲或隐藏它是免费和开源的事实__。
+如果修改并重新发布 MSL-X 源代码，或发布其他项目参考 MSL-X 的内部实现，则**必须**在文章开头或MSLX相关内容**最先出现
+**（https://github.com/MojaveHao/MSL-X）。 __不得歪曲或隐藏它是免费和开源的事实__。
 
 __Discourages__ and does __not support all commercial__ use
-Without permission, __no one__ may use images and icons, or the original text of the introduction about the origin of the name MSLX at the beginning of this article, for commercial purposes or on the homepage of the project, or other unauthorized acts.
+Without permission, __no one__ may use images and icons, or the original text of the introduction about the origin of
+the name MSLX at the beginning of this article, for commercial purposes or on the homepage of the project, or other
+unauthorized acts.
 
 Derivative software __needs__ to declare reference
-If the MSL-X distribution package is referenced __without modifying it__, the derived project should __mention the use of MSLX__ anywhere in the description.
-If the MSL-X source code is modified and republished, or another project is published with reference to the internal implementation of MSL-X, the derivative project __must__ be clearly declared from this repository at the beginning of the article or where the 'MSL-X' related content first __appears__ (https: //github.com/MojaveHao/MSL-X). The fact that __it is free and open source must not be distorted or hidden__.
+If the MSL-X distribution package is referenced __without modifying it__, the derived project should __mention the use
+of MSLX__ anywhere in the description.
+If the MSL-X source code is modified and republished, or another project is published with reference to the internal
+implementation of MSL-X, the derivative project __must__ be clearly declared from this repository at the beginning of
+the article or where the 'MSL-X' related content first __appears__ (https: //github.com/MojaveHao/MSL-X). The fact that
+__it is free and open source must not be distorted or hidden__.

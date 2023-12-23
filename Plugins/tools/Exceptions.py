@@ -1,4 +1,5 @@
 from typing import Union
+
 from .InfoClasses import InfoTypes
 
 
@@ -14,6 +15,7 @@ class WrongInfoTypeError(Exception):
             self.cotype = correct_type.value
         else:
             self.cotype = correct_type
+        self.add_note(f"Type of UniversalInfo {self.name} should be {self.cotype},but it actually {self.cutype}")
 
     @property
     def __str__(self):

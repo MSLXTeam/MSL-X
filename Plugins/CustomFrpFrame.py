@@ -8,8 +8,9 @@ from flet import (
 from loguru import logger
 
 # from Plugins.tools.PluginList import MSLXEvents, EventHandler, PluginInfo, AddPluginInfo
-from Plugins.tools.InfoClasses import UniversalInfo, InfoTypes
-from Plugins.tools.PluginTools import AddPluginInfo, EventHandler
+from Plugins.tools.InfoClasses import UniversalInfo, InfoTypes, MSLXEvents
+from Plugins.tools.PluginTools import AddPluginInfo
+from Plugins.tools.EventTools import EventHandler
 
 if TYPE_CHECKING:
     from flet import Page
@@ -29,7 +30,7 @@ def pluginload(page: 'Page'):
 
 
 @EventHandler(UniversalInfo(type_of_info=InfoTypes.EventHandler, name="CustomFrp", author="MojaveHao",
-                            description="自定义Frp的前置框架", version="0.0.1",
+                            description="自定义Frp的前置框架", version="0.0.1", on=MSLXEvents.SelectFrpcPageEvent,
                             need_page=True))
 def customFrpcPage():
     logger.debug("customFrpcPage已被调用")

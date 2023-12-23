@@ -1,7 +1,9 @@
-from .InfoClasses import handlers, UniversalInfo
-from .Exceptions import WrongInfoTypeError
-from typing import Optional, Callable
 from functools import wraps
+from typing import Optional, Callable
+
+from .Exceptions import WrongInfoTypeError
+from .InfoClasses import handlers, UniversalInfo, InfoTypes
+
 
 # todo
 # 在这里实现关于插件注册的事件相关的代码
@@ -10,13 +12,17 @@ from functools import wraps
 class EventHandler:
 
     def __init__(self, info: UniversalInfo):
-        if info.type == "EventHandler":
+        if info.type == "EventHandler" or info.type == InfoTypes.EventHandler:
             self.Event = info.on
         else:
             raise WrongInfoTypeError(info.name, info.type, "EventHandler")
 
     def __call__(self, func):
-        handlers.get(self.Event.value, None).insert(0, func)
+        if isinstance(self.Event, InfoTypes):
+            event = str(self.Event.value)
+        else:
+            event = self.Event
+        handlers.get(event, []).insert(0, func)
 
 
 class CustomEvent:

@@ -3,11 +3,12 @@ import importlib
 import threading
 from typing import Callable, Dict, Any
 
-import Decorators
+import lib.pubvars
+from lib import Decorators
 from Plugins import *  # type: ignore
-from Plugins.tools.InfoClasses import handlers as PluginHandlers
+from Plugins.tools.InfoClasses import handlers as plugin_handlers
 from Plugins.tools.PluginList import Pluginlist
-from lib.Decorators import handlers as origin_handlers
+from lib.Decorators import handlers
 from lib.log import logger
 
 global_var_lock = threading.Lock()
@@ -43,7 +44,7 @@ def merge_dicts(insert_dict, origin_dict):
 
 
 def merge_events():
-    new = merge_dicts(PluginHandlers, origin_handlers)
+    new = merge_dicts(plugin_handlers, handlers)
     Decorators.handlers = new
 
 
@@ -239,6 +240,7 @@ def initialize_plugin(name, page, **kwargs):
                 logger.debug("检测到使用了thread类")
                 process_thread_class(target_thread_class, target_func, page, call_vars)
 
+    lib.pubvars.PubVars.plugin_list = Pluginlist
 
 '''
 def before_run(name, page, **kwargs):
