@@ -13,7 +13,7 @@ sys.path.append("..")
 
 def init_page(page):
     page.title = "MSLX | Panel Login"
-    page.window_height = 550
+    page.window_height = 600
     page.window_width = 900
     page.fonts = {
         "SHS_TC": "fonts/SourceHanSansTC-Regular.otf",

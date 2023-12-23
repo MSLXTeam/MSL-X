@@ -13,13 +13,13 @@ from flet import (
     Text,
     Theme,
     Column,
-    Slider,
     Switch,
     dropdown,
     Dropdown,
     TextField,
     TextButton,
     FilePicker,
+    RangeSlider,
     FilePickerFileType,
     FilePickerResultEvent,
     KeyboardEvent,
@@ -73,7 +73,7 @@ def main(page: 'Page'):
 
         nonlocal current_server, programinfo
         page.window_height = 600
-        page.window_width = 1350
+        page.window_width = 1050
         page.fonts = dict(SHS_TC="fonts/SourceHanSansTC-Regular.otf", SHS_SC="fonts/SourceHanSansSC-Regular.otf")
         theme_dark = Theme(font_family="SHS_SC", color_scheme_seed="#1f1e33")
         theme_day = Theme(font_family="SHS_SC")
@@ -141,7 +141,6 @@ def main(page: 'Page'):
         global dd_choose_java
         dd_choose_java = Dropdown(
             label="Java选择",
-            width=150,
             options=[
                 dropdown.Option("Path"),
                 dropdown.Option("手动选择一个文件"),
@@ -159,17 +158,18 @@ def main(page: 'Page'):
             label="服务端名称(不需要.jar后缀),默认为server", width=300
         )
 
-        global xms, sli_xms, sli_xmx
-        sli_xms = Slider(
-            label="最小内存(G)", width=500,
-            divisions=current_server.xmx - 1, min=1, max=current_server.xmx, on_change=change_xms
-        )
-        sli_xmx = Slider(
-            label="最大内存(G)", width=500,
-            divisions=current_server.xmx - current_server.xms, min=1, max=current_server.xmx, on_change=change_xmx
+        global sr_ram, text_xms, text_xmx
+        sr_ram = RangeSlider(
+            label='{value}G',
+            min=1,
+            max=current_server.xmx,
+            start_value=1,
+            end_value=current_server.xmx,
+            divisions=current_server.xmx - 1,
+            width=page.width - 420,
+            on_change=change_xms_and_xmx
         )
 
-        global xmx, text_xms, text_xmx
         text_xms = Text(f"最小内存:{current_server.xms}G")
         text_xmx = Text(f"最大内存:{current_server.xmx}G")
 
@@ -181,10 +181,21 @@ def main(page: 'Page'):
             Column(controls=[
                 Row(
                     controls=[
-                        switch_srv_opti_read_only,
-                        txt_server_option,
                         txt_server_name,
                         btn_select_server_path,
+
+                    ],
+                    alignment=MainAxisAlignment.END
+                ),
+                Row(
+                    controls=[
+                        txt_server_option,
+                        switch_srv_opti_read_only,
+                    ],
+                    alignment=MainAxisAlignment.END
+                ),
+                Row(
+                    controls=[
                         dd_choose_java,
                         btn_show_java_path
                     ],
@@ -195,10 +206,7 @@ def main(page: 'Page'):
                         text_xms,
                         text_xmx
                     ]),
-                    Row(controls=[
-                        sli_xms,
-                        sli_xmx
-                    ])
+                    sr_ram
                 ]),
                 btn_hitokoto
             ])
@@ -353,21 +361,13 @@ def main(page: 'Page'):
             page.add(warn_finish_change)
             page.update()
 
-    def change_xms(e):
+    def change_xms_and_xmx(e):
         nonlocal current_server
         assert current_server is not None
-        assert sli_xms.value is not None
-        current_server.xms = math.floor(sli_xms.value)
+        current_server.xms = math.floor(float(sr_ram.start_value))
+        current_server.xmx = math.floor(float(sr_ram.end_value))
         text_xms.value = f"最小内存:{current_server.xms}G"
-        page.update()
-
-    def change_xmx(e):
-        nonlocal current_server
-        assert current_server is not None
-        assert sli_xmx.value is not None
-        xmx = math.floor(sli_xmx.value)
-        current_server.xmx = xmx
-        text_xmx.value = f"最大内存:{xmx}G"
+        text_xmx.value = f"最大内存:{current_server.xmx}G"
         page.update()
 
     def save_config(e):
@@ -809,7 +809,7 @@ def main(page: 'Page'):
             clrpage()
             logs.init_page(page)
             text_server_logs = TextField(label="服务器输出", value="Minecraft Server Logs Here...", read_only=True,
-                                         multiline=True, width=750, height=500)
+                                         multiline=True, width=page.width-420, height=450)
             txt_command = TextField(label="在此键入向服务器发送的命令", on_submit=submit_cmd)
             btn_refresh = ElevatedButton("刷新", on_click=refresh)
             page.add(
@@ -824,7 +824,7 @@ def main(page: 'Page'):
             page.update()
 
         def opendoc():
-            wb.open("https://mojavehao.github.io/MSL-X/#/")
+            wb.open("https://mslxteam.github.io/MSL-X/#/")
 
         def showinfo():
             def close(e):
