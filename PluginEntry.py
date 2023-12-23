@@ -4,11 +4,8 @@ import threading
 from typing import Callable, Dict, Any
 
 import lib.pubvars
-from lib import Decorators
 from Plugins import *  # type: ignore
-from Plugins.tools.InfoClasses import handlers as plugin_handlers
 from Plugins.tools.PluginList import Pluginlist
-from lib.Decorators import handlers
 from lib.log import logger
 
 global_var_lock = threading.Lock()
@@ -20,32 +17,6 @@ on_disable_func_dict: Dict[str, Callable] = {}
 on_load_classes_dict: Dict[str, Any] = {}
 on_enable_classes_dict: Dict[str, Any] = {}
 on_disable_classes_dict: Dict[str, Any] = {}
-
-
-def merge_dicts(insert_dict, origin_dict):
-    """
-    result = dict1.copy()  # 创建一个dict1的副本，以保持原始数据不受影响
-
-    for key, value in dict2.items():
-        if key in result:
-            # 如果键在dict1中已经存在，将dict2中的值插入到列表的前面
-            result[key].insert(0, value)
-        else:
-            # 如果键在dict1中不存在，创建一个新列表并将dict2中的值添加到其中
-            result[key] = [value]
-
-    return result
-    """
-    dict1 = insert_dict.copy()
-    dict2 = origin_dict.copy()
-    for event, handlers in dict1.items():
-        dict2[event] = handlers + dict1[event]
-    return dict2
-
-
-def merge_events():
-    new = merge_dicts(plugin_handlers, handlers)
-    Decorators.handlers = new
 
 
 def process_event(event_key: str, event_value: Any, file_name: str, event_dict: Dict[str, Any]) -> None:

@@ -13,6 +13,7 @@ class MSLXEvents(Enum):  # 事件类型枚举
     # 一些函数的事件
     StartServerEvent = "StartServerEvent"
     CloseWindowEvent = "CloseWindowEvent"
+    SearchJavaEvent = "SearchJavaEvent"
 
 
 class InfoTypes(Enum):  # 信息类型枚举
@@ -27,6 +28,7 @@ handlers = {
     MSLXEvents.SelectHomepageEvent.value: [],
     MSLXEvents.SelectFrpcPageEvent.value: [],
     MSLXEvents.SelectAboutPageEvent.value: [],
+    MSLXEvents.SearchJavaEvent.value: []
 }
 
 
@@ -63,6 +65,8 @@ class UniversalInfo:  # 通用信息类
                 self.need_args = args["need_args"]
             if "on_load" in events.keys():
                 self.on_load = events["on_load"]
+            if "on_unload" in events.keys():
+                self.on_unload = events["on_unload"]
             if "on_enable" in events.keys():
                 self.on_enable = events["on_enable"]
             if "on_disable" in events.keys():

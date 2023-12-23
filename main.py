@@ -29,12 +29,8 @@ from flet import (
 )
 
 import PluginEntry
-from lib.Decorators import (
-    MSLXEvents,
-    EventHandler,
-    GetEventHandlers,
-    handlers as program_handlers
-)
+from Plugins.tools.EventTools import EventHandler
+from Plugins.tools.InfoClasses import handlers, MSLXEvents
 from lib.confctl import (
     ConfCtl,
     LoadServerInfoToServer,
@@ -103,7 +99,7 @@ def main(page: 'Page'):
         programinfo.running_server_list.append(current_server)
 
     def StartServerEvent(fe):
-        lst = GetEventHandlers(MSLXEvents.StartServerEvent.value)
+        lst = handlers.get(MSLXEvents.StartServerEvent)
         for func in lst:
             try:
                 func(fe)
@@ -148,7 +144,7 @@ def main(page: 'Page'):
             width=150,
             options=[
                 dropdown.Option("Path"),
-                dropdown.Option("Choose Java File"),
+                dropdown.Option("手动选择一个文件"),
             ],
             on_change=change_java
         )
@@ -235,11 +231,13 @@ def main(page: 'Page'):
         java_option = dd_choose_java.value
         if java_option == 'Path':
             current_server.use_java = 'java'
-        else:
+        elif java_option == '手动选择一个文件':
             picker = FilePicker(on_result=get_result)
             page.overlay.append(picker)
             page.update()
             picker.pick_files(dialog_title="选择Java路径")
+        elif java_option in java_result:
+            current_server.use_java = java_result[java_option]['path']
 
     def show_java_path(e):
         assert current_server is not None
@@ -866,7 +864,7 @@ def main(page: 'Page'):
                 logspage()
             case 2:
                 # frpcpage()
-                for func in (handler := GetEventHandlers(MSLXEvents.SelectFrpcPageEvent.value)):
+                for func in (handler := handlers.get(MSLXEvents.SelectFrpcPageEvent.value)):
                     logger.debug(handler)
                     try:
                         func()
@@ -891,12 +889,26 @@ def main(page: 'Page'):
     # 初始化各个插件
     PluginEntry.initialize_plugin("main", page)
     logger.debug("插件系统加载完毕")
-    # 把插件注册的事件加入到MSLX的事件列表中
-    logger.debug("准备合并Handlers")
-    # logger.debug(f"插件注册的Handler:{Plugins.PluginList.handlers}")
-    # logger.debug(f"程序内的的Handler:{Decorators.handlers}")
-    PluginEntry.merge_events()
-    logger.debug(f"合并Handlers完成,现在的Handler:{program_handlers}")
+
+    handler = handlers.get(MSLXEvents.SearchJavaEvent.value)
+    if handler:
+        logger.debug("准备开始搜索Java")
+        global java_result
+        java_result = {}
+        # 调用查找Java的Handler
+        for func in handler:
+            logger.debug(handler)
+            try:
+                java_result = func()
+            except Exception as e:
+                logger.error(f"检测Java时出现错误:{e}")
+                continue
+            else:
+                break
+        if java_result != {}:
+            for j in java_result.keys():
+                dd_choose_java.options.append(dropdown.Option(j))
+            page.update()
 
 
 app(target=main, assets_dir="assets")

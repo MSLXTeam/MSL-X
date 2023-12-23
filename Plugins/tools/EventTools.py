@@ -1,8 +1,9 @@
+from enum import Enum
 from functools import wraps
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
 
 from .Exceptions import WrongInfoTypeError
-from .InfoClasses import handlers, UniversalInfo, InfoTypes
+from .InfoClasses import handlers, UniversalInfo, InfoTypes, MSLXEvents
 
 
 # todo
@@ -11,14 +12,15 @@ from .InfoClasses import handlers, UniversalInfo, InfoTypes
 
 class EventHandler:
 
-    def __init__(self, info: UniversalInfo):
-        if info.type == "EventHandler" or info.type == InfoTypes.EventHandler:
-            self.Event = info.on
+    def __init__(self, info: Union[UniversalInfo, MSLXEvents]):
+        if isinstance(info, Enum) or getattr(info, "type", None) == "EventHandler" or \
+                getattr(info, "type", None) == InfoTypes.EventHandler:
+            self.Event = getattr(info, "on", info)
         else:
             raise WrongInfoTypeError(info.name, info.type, "EventHandler")
 
     def __call__(self, func):
-        if isinstance(self.Event, InfoTypes):
+        if isinstance(self.Event, Enum):
             event = str(self.Event.value)
         else:
             event = self.Event
