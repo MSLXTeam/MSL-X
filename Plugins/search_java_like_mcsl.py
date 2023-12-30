@@ -74,11 +74,12 @@ def get_java_version(file: str) -> str:
         version_pattern = r"(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:[._](\d+))?(?:-(.+))?"
         version_match = search(version_pattern, output.decode('utf-8'))
         if version_match:
-            return ".".join(filter(None, version_match.groups()))
+            logger.info(f"{file}的版本:" + (info := ".".join(filter(None, version_match.groups()))))
+            return info
     except subprocess.CalledProcessError as e:
-        logger.warning(f"获取Java版本失败: {e}")
+        logger.warning(f"获取{file}的版本失败: {e.returncode}")
     except subprocess.TimeoutExpired:
-        logger.warning("检测版本超时,已跳过")
+        logger.warning(f"{file}检测版本超时,已跳过")
     return ""
 
 
@@ -93,7 +94,6 @@ def search_file(path: str, keyword: str, ext: str, f_search: bool, match_func: c
                 full_path = join(path, file)
                 if isfile(full_path):
                     if match_func(path, file):
-                        logger.info(f"已匹配到:{full_path}")
                         version = get_java_version(full_path)
                         if version:
                             found_java.append(Java(full_path, version))

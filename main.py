@@ -16,6 +16,7 @@ from flet import (
     Switch,
     dropdown,
     Dropdown,
+    Markdown,
     TextField,
     TextButton,
     FilePicker,
@@ -29,6 +30,7 @@ from flet import (
 )
 
 import PluginEntry
+from Plugins.tools.PluginList import Pluginlist
 from Plugins.tools.EventTools import EventHandler
 from Plugins.tools.InfoClasses import handlers, MSLXEvents
 from lib.confctl import (
@@ -827,12 +829,25 @@ def main(page: 'Page'):
             wb.open("https://mslxteam.github.io/MSL-X/#/")
 
         def showinfo():
+
+            installed_plugin = ""
+
+            for i in Pluginlist:
+                c = i['class']
+                text = (f"\n ## {c.name}\n\n"
+                        f"> {c.description}\n\n"
+                        f"作者:{c.author}\n\n"
+                        f"版本:{c.version}\n\n")
+                installed_plugin += text
+
             def close(e):
                 about.open = False
                 page.update()
 
             about = AlertDialog(
-                title=Text("MSLX Beta 0.08(0.0.8b)"),
+                title=Text("MSLX 0.0.9b"),
+                content=Markdown(f"[Repository Here](https://github.com/MSLXTeam/MSL-X)\n\nCopyleft MojaveHao and all "
+                                 f"contributors\n\n# 安装的插件:\n{installed_plugin}"),
                 actions=[TextButton("确认", on_click=close)],
                 modal=True,
                 open=True,
@@ -902,6 +917,7 @@ def main(page: 'Page'):
                 java_result = func()
             except Exception as e:
                 logger.error(f"检测Java时出现错误:{e}")
+                java_result = {}
                 continue
             else:
                 break
