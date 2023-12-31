@@ -15,6 +15,9 @@ class MSLXEvents(Enum):  # 事件类型枚举
     CloseWindowEvent = "CloseWindowEvent"
     SearchJavaEvent = "SearchJavaEvent"
 
+    # 其他事件
+    KeyboardShortcutEvent = "KeyboardShortcutEvent"
+
 
 class InfoTypes(Enum):  # 信息类型枚举
     Plugin = "Plugin"
@@ -28,7 +31,8 @@ handlers = {
     MSLXEvents.SelectHomepageEvent.value: [],
     MSLXEvents.SelectFrpcPageEvent.value: [],
     MSLXEvents.SelectAboutPageEvent.value: [],
-    MSLXEvents.SearchJavaEvent.value: []
+    MSLXEvents.SearchJavaEvent.value: [],
+    MSLXEvents.KeyboardShortcutEvent.value: []
 }
 
 
@@ -52,22 +56,22 @@ class UniversalInfo:  # 通用信息类
         self.on = on
         self.file = file
         self.need_args = []
+        self.events = events
+        self.on_load = None
+        self.on_unload = None
+        self.on_enable = None
+        self.on_disable = None
+        if "need_vars" in args.keys():
+            self.need_args = args["need_args"]
+        if "on_load" in events.keys():
+            self.on_load = events["on_load"]
+        if "on_unload" in events.keys():
+            self.on_unload = events["on_unload"]
+        if "on_enable" in events.keys():
+            self.on_enable = events["on_enable"]
+        if "on_disable" in events.keys():
+            self.on_disable = events["on_disable"]
         if isinstance(type_of_info, MSLXEvents):
             self.type = type_of_info.value
         else:
             self.type = type_of_info
-        if self.type == "Plugin":
-            self.events = events
-            self.on_load = None
-            self.on_enable = None
-            self.on_disable = None
-            if "need_vars" in args.keys():
-                self.need_args = args["need_args"]
-            if "on_load" in events.keys():
-                self.on_load = events["on_load"]
-            if "on_unload" in events.keys():
-                self.on_unload = events["on_unload"]
-            if "on_enable" in events.keys():
-                self.on_enable = events["on_enable"]
-            if "on_disable" in events.keys():
-                self.on_disable = events["on_disable"]

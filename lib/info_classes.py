@@ -2,40 +2,38 @@ import json
 import math
 import os
 import subprocess as sp
-
 import psutil
 import requests
 
 
 class SingleServerInfo:
-    def __init__ \
-                    (
-                    self,
-                    use_java: str = "java",
-                    xms: int = 1,
-                    xmx: int = 4,
-                    server_path: str = "",
-                    server_file: str = "server.jar",
-                    descr: str = "",
-                    name: str = "",
-                    server_options: list[str] = \
-                            (
-                                    "-XX:+UnlockExperimentalVMOptions",
-                                    "-XX:MaxGCPauseMillis=100",
-                                    "-XX:+DisableExplicitGC",
-                                    "-XX:TargetSurvivorRatio=90",
-                                    "-XX:G1NewSizePercent=50",
-                                    "-XX:G1MaxNewSizePercent=80",
-                                    "-XX:G1MixedGCLiveThresholdPercent=35",
-                                    "-XX:+AlwaysPreTouch",
-                                    "-XX:+ParallelRefProcEnabled",
-                                    "-Dusing.aikars.flags=mcflags.emc.gs"
-                            )
-            ):
+    def __init__(
+            self,
+            type_is_java: bool = True,
+            executor: str = "java",
+            xms: int = 1,
+            xmx: int = 4,
+            server_path: str = "",
+            server_file: str = "server.jar",
+            descr: str = "",
+            name: str = "",
+            server_options: list[str] = (
+                    "-XX:+UnlockExperimentalVMOptions",
+                    "-XX:MaxGCPauseMillis=100",
+                    "-XX:+DisableExplicitGC",
+                    "-XX:TargetSurvivorRatio=90",
+                    "-XX:G1NewSizePercent=50",
+                    "-XX:G1MaxNewSizePercent=80",
+                    "-XX:G1MixedGCLiveThresholdPercent=35",
+                    "-XX:+AlwaysPreTouch",
+                    "-XX:+ParallelRefProcEnabled",
+                    "-Dusing.aikars.flags=mcflags.emc.gs"
+            )
+    ):
         self.server = None
-        vsmem = psutil.virtual_memory()
-        self.xmx = math.floor(vsmem.free / 1000000000 * 0.7)
-        self.use_java = use_java  # 保存Java路径，为"JAVA"时使用环境变量(默认)
+        self.xmx = math.floor(psutil.virtual_memory().free / 1000000000 * 0.7)
+        self.type_is_java = type_is_java
+        self.executor = executor
         self.xms = xms  # G省略
         self.xmx = xmx
         self.descr = descr
@@ -54,23 +52,18 @@ class SingleServerInfo:
         if self.xms > self.xmx:
             return 2
         server_file_path: str = self.server_path + os.sep + self.server_file
-        if ".jar" not in self.server_file:
+        if ".jar" not in self.server_file and self.type_is_java:
             server_file_path += ".jar"
-        server_options_str = ""
-        for index in self.server_options:
-            server_options_str += f"{index} "
-        self.server = sp.Popen \
-                (
-                args=f"{self.use_java} -Xms{self.xms}G -Xmx{self.xmx}G {server_options_str} -jar {server_file_path}",
-                cwd=self.server_path,
-                text=True,
-                stdin=sp.PIPE,
-            )
+        args = [self.executor, f'-Xms{self.xms}G', f'-Xmx{self.xmx}G'] + self.server_options + ['-jar', server_file_path.replace('\\','/')]
+        self.server = sp.Popen(
+            args=args,
+            cwd=self.server_path,
+            text=True,
+            stdin=sp.PIPE,
+        )
 
     def convert_list2str(self):
-        self.server_option_str = ""
-        for i in self.server_options:
-            self.server_option_str += i
+        self.server_option_str = ' '.join(self.server_options)
 
     def convert_str2list(self):
         self.server_options = self.server_option_str.split(' ')

@@ -161,6 +161,7 @@ cython_debug/
 
 .vscode/
 
+Config
 *.ico
 build.cmd
 clr.cmd

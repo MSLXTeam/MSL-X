@@ -19,7 +19,7 @@ class ConfCtl:
         self.server_path = ""
         self.description = ""
         self.name = "Default"
-        self.jvm_options = \
+        self.process_options = \
             [
                 "-XX:+UnlockExperimentalVMOptions",
                 "-XX:MaxGCPauseMillis=100",
@@ -32,14 +32,14 @@ class ConfCtl:
                 "-XX:+ParallelRefProcEnabled",
                 "-Dusing.aikars.flags=mcflags.emc.gs"
             ]
+        self.options_str = ""
         if full_path == "":
             self.path = f'Config{sep}{name}.json'
         else:
             self.path = full_path
-            logger.debug(f"已使用{full_path}替换self.path")
 
     @logger.catch
-    def Load_Config(self):
+    def load_config(self):
         with open(self.path, 'r', encoding='utf-8') as fl:
             conf_dict = json.load(fl)
             try:
@@ -49,14 +49,14 @@ class ConfCtl:
                 self.server = conf_dict["server"]
                 self.server_path = conf_dict["path"]
                 self.description = conf_dict["description"]
-                self.jvm_options = conf_dict["jvm_options"]
+                self.process_options = conf_dict["jvm_options"]
                 self.name = conf_dict["name"]
             except KeyError:
-                self.Save_Config()
+                self.save_config()
                 logger.warning("检测到配置文件损坏,已写入默认设置")
 
     @logger.catch
-    def Save_Config(self):
+    def save_config(self):
         with open(self.path, 'w', encoding='utf-8') as fl:
             conf_dict: Any = \
                 {
@@ -66,43 +66,35 @@ class ConfCtl:
                     "server": self.server,
                     "path": self.server_path,
                     "description": self.description,
-                    "jvm_options": self.jvm_options,
+                    "jvm_options": self.process_options,
                     "name": self.name
                 }
             json.dump(conf_dict, fl)
 
 
-def LoadServerInfoToServer(name: str = "Default", full_path=""):
+def load_info_to_server(name: str = "Default", full_path=""):
     cfctl = ConfCtl(name=name, full_path=full_path)
-    cfctl.Load_Config()
-    server = SingleServerInfo \
-            (
-            xms=cfctl.xms,
-            xmx=cfctl.xmx,
-            use_java=cfctl.java,
-            server_options=cfctl.jvm_options,
-            server_file=cfctl.server,
-            server_path=cfctl.server_path,
-            descr=cfctl.description,
-            name=cfctl.name
-        )
+    cfctl.load_config()
+    server = SingleServerInfo(executor=cfctl.java, xms=cfctl.xms, xmx=cfctl.xmx, server_path=cfctl.server_path,
+                              server_file=cfctl.server, descr=cfctl.description, name=cfctl.name,
+                              server_options=cfctl.process_options)
     return server
 
 
-def SaveServerInfoToConf(serverclass: Any, name: str = "Default", full_path: str = ""):  # type: ignore
+def save_server_to_conf(class_server: SingleServerInfo, name: str = "Default", full_path: str = ""):
     cfctl = ConfCtl(name=name, full_path=full_path)
-    cfctl.xms = serverclass.xms
-    cfctl.xmx = serverclass.xmx
-    cfctl.java = serverclass.use_java
-    cfctl.jvm_options = serverclass.server_options
-    cfctl.server = serverclass.server_file
-    cfctl.server_path = serverclass.server_path
-    cfctl.description = serverclass.descr
-    cfctl.name = serverclass.name
-    cfctl.Save_Config()
+    cfctl.xms = class_server.xms
+    cfctl.xmx = class_server.xmx
+    cfctl.java = class_server.executor
+    cfctl.process_options = class_server.server_options
+    cfctl.server = class_server.server_file
+    cfctl.server_path = class_server.server_path
+    cfctl.description = class_server.descr
+    cfctl.name = class_server.name
+    cfctl.save_config()
 
 
-def ReadSoftwareSettings():
+def read_software_settings():
     with open("../Config/mslx.toml", encoding="utf-8", mode="rb") as f:
         data = pytoml.load(f)
         style = data.get("style")
