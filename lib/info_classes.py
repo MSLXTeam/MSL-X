@@ -19,7 +19,7 @@ class SingleServerInfo:
                     descr: str = "",
                     name: str = "",
                     server_options: list[str] = \
-                            (
+                            [
                                     "-XX:+UnlockExperimentalVMOptions",
                                     "-XX:MaxGCPauseMillis=100",
                                     "-XX:+DisableExplicitGC",
@@ -30,7 +30,7 @@ class SingleServerInfo:
                                     "-XX:+AlwaysPreTouch",
                                     "-XX:+ParallelRefProcEnabled",
                                     "-Dusing.aikars.flags=mcflags.emc.gs"
-                            )
+                            ]
             ):
         self.server = None
         vsmem = psutil.virtual_memory()

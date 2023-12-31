@@ -13,12 +13,13 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 
 # 设置日志文件的路径
-log_file_latest = os.path.join(parent_dir, 'logs', 'latest.log')
-log_file = os.path.join(parent_dir, 'logs', f'mslx-{datetime.datetime.now().strftime("%Y-%m-%d")}.log')
+LOG_FILE_LATEST = os.path.join(parent_dir, 'logs', 'latest.log')
+LOG_FILE = os.path.join(parent_dir, 'logs', f'mslx-{datetime.datetime.now().strftime("%Y-%m-%d")}.log')
 
 # 删除原先的日志
-os.remove(log_file_latest)
+if os.path.exists(LOG_FILE_LATEST):
+    os.remove(LOG_FILE_LATEST)
 
 # 配置Loguru日志记录器
-# logger.add(log_file, encoding='utf-8', backtrace=True, diagnose=True)
-logger.add(log_file_latest, encoding='utf-8', backtrace=True, diagnose=True)
+# logger.add(LOG_FILE, encoding='utf-8', backtrace=True, diagnose=True)
+logger.add(LOG_FILE_LATEST, encoding='utf-8', backtrace=True, diagnose=True)

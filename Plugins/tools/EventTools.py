@@ -11,10 +11,12 @@ from .InfoClasses import handlers, UniversalInfo, InfoTypes, MSLXEvents
 
 
 class EventHandler:
-
-    def __init__(self, info: Union[UniversalInfo, MSLXEvents]):
-        if isinstance(info, Enum) or getattr(info, "type", None) == "EventHandler" or \
-                getattr(info, "type", None) == InfoTypes.EventHandler:
+    def __init__(self, info: UniversalInfo | MSLXEvents):
+        if (
+            isinstance(info, Enum)
+            or getattr(info, "type", None) == "EventHandler"
+            or getattr(info, "type", None) == InfoTypes.EventHandler
+        ):
             self.Event = getattr(info, "on", info)
         else:
             raise WrongInfoTypeError(info.name, info.type, "EventHandler")
@@ -28,7 +30,6 @@ class EventHandler:
 
 
 class CustomEvent:
-
     def __init__(self, info: UniversalInfo):
         if info.type == "EventHandler":
             self.Event = info.on

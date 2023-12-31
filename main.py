@@ -99,7 +99,8 @@ def main(page: 'Page'):
         programinfo.running_server_list.append(current_server)
 
     def StartServerEvent(fe):
-        lst = handlers.get(MSLXEvents.StartServerEvent)
+        lst = handlers.get(MSLXEvents.StartServerEvent.value)
+        assert lst
         for func in lst:
             try:
                 func(fe)
@@ -774,6 +775,7 @@ def main(page: 'Page'):
     def submit_cmd(e):
         nonlocal current_server
         assert current_server is not None
+        assert current_server.server
         assert txt_command.value is not None
         current_server.server.communicate(input=txt_command.value)
         refresh(e)
