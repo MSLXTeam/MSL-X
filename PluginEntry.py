@@ -1,25 +1,19 @@
+import os
 import gc
 import importlib
 import threading
 from typing import Callable, Dict, Any
 
 import lib.pubvars
-from Plugins import *  # type: ignore
 from Plugins.tools.PluginList import Pluginlist
 from lib.log import logger
 
 global_var_lock = threading.Lock()
 
-# 定义运行中保存的字典
-on_load_func_dict: Dict[str, Callable] = {}
-on_enable_func_dict: Dict[str, Callable] = {}
-on_disable_func_dict: Dict[str, Callable] = {}
-on_load_classes_dict: Dict[str, Any] = {}
-on_enable_classes_dict: Dict[str, Any] = {}
-on_disable_classes_dict: Dict[str, Any] = {}
+all_events=  {}
 
 
-def process_event(event_key: str, event_value: Any, file_name: str, event_dict: Dict[str, Any]) -> None:
+def process_event(event_key: str, event_value: Any, file_name: str, all_events: Dict[str, Dict[str, Any]]) -> None:
     """
     处理单个事件，将函数或类存储在全局字典中。
 
@@ -27,44 +21,29 @@ def process_event(event_key: str, event_value: Any, file_name: str, event_dict: 
         event_key (str): 事件的键。
         event_value (Any): 事件的值，可以是函数信息或字典信息。
         file_name (str): 插件的文件名。
-        event_dict (Dict[str, Any]): 存储事件信息的全局字典。
+        all_events (Dict[str, Dict[str, Any]]): 存储所有事件信息的全局字典。
     """
-    m = importlib.import_module("Plugins." + file_name)
+    def update_event_dict(event_key: str, module_name: str, event_object: Any):
+        """更新全局事件字典"""
+        if event_key not in all_events:
+            all_events[event_key] = {}
+        all_events[event_key][module_name] = event_object
 
-    if event_value[0] == "func":
-        # 如果事件值是函数信息，获取函数对象并存储在全局字典中
-        event_func = getattr(m, event_value[1])
-        if event_func is not None:
-            event_dict["Plugins." + file_name] = event_func
-            if event_key == "on_load":
-                global on_load_func_dict
-                on_load_func_dict = {**on_load_func_dict, **event_dict}
-            elif event_key == "on_enable":
-                global on_enable_func_dict
-                on_enable_func_dict = {**on_enable_func_dict, **event_dict}
-            elif event_key == "on_disable":
-                global on_disable_func_dict
-                on_disable_func_dict = {**on_disable_func_dict, **event_dict}
-
-    elif isinstance(event_value, dict):
-        # 如果事件值是字典信息，检查是否包含必要的键
-        dict_keys = event_value.keys()
-        if "mode" in dict_keys and "type" in dict_keys and "value" in dict_keys:
-            match event_value["type"]:
-                case "class":
-                    # 如果是合法的字典信息，获取类对象并存储在全局字典中
-                    target_class = getattr(m, event_value["value"])
-                    if target_class is not None:
-                        event_dict["Plugins." + file_name] = event_value['value']
-                        if event_key == "on_load":
-                            global on_load_classes_dict
-                            on_load_classes_dict = {**on_load_classes_dict, **event_dict}
-                        elif event_key == "on_enable":
-                            global on_enable_classes_dict
-                            on_enable_classes_dict = {**on_enable_classes_dict, **event_dict}
-                        elif event_key == "on_disable":
-                            global on_disable_classes_dict
-                            on_disable_classes_dict = {**on_disable_classes_dict, **event_dict}
+    try:
+        m = importlib.import_module("Plugins." + file_name)
+        if event_value[0] == "func":
+            event_func = getattr(m, event_value[1])
+            if event_func:
+                update_event_dict(event_key, "Plugins." + file_name, event_func)
+        elif isinstance(event_value, dict) and all(k in event_value for k in ["mode", "type", "value"]):
+            if event_value["type"] == "class":
+                target_class = getattr(m, event_value["value"])
+                if target_class:
+                    update_event_dict(event_key, "Plugins." + file_name, event_value['value'])
+    except ImportError as e:
+        logger.error(f"无法导入模块: {e}")
+    except AttributeError as e:
+        logger.error(f"无法获取模块属性: {e}")
 
 
 def process_plugin_events(events: Dict[str, Any], file_name: str) -> None:
@@ -79,13 +58,13 @@ def process_plugin_events(events: Dict[str, Any], file_name: str) -> None:
     for event_key, event_value in events.items():
         if event_key == "on_load":
             # 处理 on_load 事件并存储到对应的全局字典中
-            process_event(event_key, event_value, file_name, on_load_func_dict)
+            process_event(event_key, event_value, file_name, all_events)
         elif event_key == "on_enable":
             # 处理 on_enable 事件并存储到对应的全局字典中
-            process_event(event_key, event_value, file_name, on_enable_func_dict)
+            process_event(event_key, event_value, file_name, all_events)
         elif event_key == "on_disable":
             # 处理 on_disable 事件并存储到对应的全局字典中
-            process_event(event_key, event_value, file_name, on_disable_func_dict)
+            process_event(event_key, event_value, file_name, all_events)
 
 
 def process_plugin_args(need_args, kwargs):
@@ -149,60 +128,47 @@ def initialize_plugin(name, page, **kwargs):
         kwargs (Dict): 包含全局变量和函数的字典。
     """
 
+    # 遍历所有可能的插件文件来使装饰器生效
+    for root, _, files in os.walk("Plugins"):
+        if root != "Plugins":
+            break
+        for file in files:
+            if file.endswith(".py"):
+                importlib.import_module('.' + file.split(".")[0], package="Plugins")
+
     # 针对单个插件信息的处理
     for plugin in Pluginlist:
-        # if plugin["Loadtime"] == load_time and plugin["Location"] == name:
-        if plugin["Location"] == name:
+        if plugin.on == name:
 
-            load_info = f"正在加载{plugin['Name']}"
+            load_info = f"正在加载{plugin.name}"
             logger.info(f"{load_info:=^30}")
             logger.info(f"插件信息:")
-            logger.info(f"插件版本:{plugin['version']}")
-            logger.info(f"插件作者:{plugin['author']}")
-            logger.info(f"入口点文件:{plugin['file']}")
+            logger.info(f"插件版本:{plugin.version}")
+            logger.info(f"插件作者:{plugin.author}")
+            logger.info(f"入口点文件:{plugin.file}")
 
             use_thread_class = False
-            target_func = plugin["EntryPoint"]
+            target_func = plugin.on_load
             target_thread_class = None
-            # need_funcs = []
             need_page = False
 
             # 处理插件需要获取的程序变量和函数
-            need_args = plugin.get("args", {})
+            need_args = getattr(plugin, "args", {})
             call_vars, call_funcs = process_plugin_args(need_args, kwargs)
 
-            for key, value in plugin.items():
-                if key == "events":
-                    process_plugin_events(value, plugin["File"])
-                elif key == "unsafe":
-                    unsafe = value
-                elif key == "need_page":
-                    need_page = value
-                elif key == "multi_thread":
-                    if "thread_class" in plugin and plugin["thread_class"]:
-                        m = importlib.import_module("Plugins." + plugin["File"])
-                        if hasattr(m, plugin["thread_class"]):
-                            thread_class = getattr(m, plugin["thread_class"])
-                            if hasattr(thread_class, "run"):
-                                target_thread_class = thread_class
-                                use_thread_class = True
-                            else:
-                                logger.critical("指定的对象没有run方法", 2)
-                    else:
-                        logger.critical("指定的对象不存在", 2)
-                    gc.collect()
+            process_plugin_events(plugin.events, plugin.file)
+            need_page = plugin.need_page
+            if plugin.multi_thread:
+                thread_class = plugin.thread_class
+                if hasattr(thread_class, "run"):
+                    target_thread_class = thread_class
+                    use_thread_class = True
+                else:
+                    logger.error(f"指定的对象{thread_class}没有run方法")
 
-            # 处理完成,准备调用
+                    # 处理完成,准备调用
             if use_thread_class is False:
                 logger.debug("没有使用thread类,将直接调用函数")
-                '''
-                if not need_funcs:
-                    if not need_page:
-                        target_func(**call_vars)
-                    else:
-                        target_func(page, **call_vars)
-                else:
-                '''
                 if not need_page:
                     target_func(**call_vars)
                 else:
@@ -213,58 +179,3 @@ def initialize_plugin(name, page, **kwargs):
 
     lib.pubvars.PubVars.plugin_list = Pluginlist
 
-'''
-def before_run(name, page, **kwargs):
-    """
-    在插件初始化之前调用总入口点。
-
-    Args:
-        name (str): 插件的名称。
-        page (Page): 插件的页面对象。
-        kwargs (Dict): 包含全局变量和函数的字典。
-    """
-    initialize_plugin(name, page, 'before', **kwargs)
-
-
-def after_run(name, page, **kwargs):
-    """
-    在插件初始化之后调用总入口点。
-
-    Args:
-        name (str): 插件的名称。
-        page (Page): 插件的页面对象。
-        kwargs (Dict): 包含全局变量和函数的字典。
-    """
-    initialize_plugin(name, page, 'after', **kwargs)
-
-'''
-
-
-def enable_plugin(name):
-    """
-    启用插件时调用的函数。
-
-    Args:
-        name (str): 插件的名称。
-    """
-    if name in on_enable_func_dict:
-        on_enable_func_dict[name]()
-    elif name in on_enable_classes_dict:
-        pass
-    else:
-        logger.error(f"没有找到{name}的开启时方法")
-
-
-def disable_plugin(name):
-    """
-    禁用插件时调用的函数。
-
-    Args:
-        name (str): 插件的名称。
-    """
-    if name in on_disable_func_dict:
-        on_disable_func_dict[name]()
-    elif name in on_disable_classes_dict:
-        pass
-    else:
-        logger.error(f"没有找到{name}的禁用时方法")

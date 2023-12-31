@@ -77,7 +77,7 @@ def get_java_version(file: str) -> str:
             logger.info(f"{file}的版本:" + (info := ".".join(filter(None, version_match.groups()))))
             return info
     except subprocess.CalledProcessError as e:
-        logger.warning(f"获取{file}的版本失败: {e.returncode}")
+        logger.warning(f"获取{file}的版本失败,退出代码为{e.returncode}")
     except subprocess.TimeoutExpired:
         logger.warning(f"{file}检测版本超时,已跳过")
     return ""
@@ -171,6 +171,6 @@ def detect_java(f_search: bool = True):  # 定义检测Java的函数
         java_path_list.extend(search_file("/usr/lib", "java", "", f_search, lambda p, f: f.endswith('java')))
     java_list = {}
     for obj in java_path_list:
-        java_list[f'{obj.version}({obj.path})'] = {"path": obj.path, "ver": obj.version}
+        java_list[f'Java{obj.version}({obj.path})'] = {"path": obj.path, "ver": obj.version}
     logger.info("Java检测完成")
     return java_list

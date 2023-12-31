@@ -17,7 +17,10 @@ log_file_latest = os.path.join(parent_dir, 'logs', 'latest.log')
 log_file = os.path.join(parent_dir, 'logs', f'mslx-{datetime.datetime.now().strftime("%Y-%m-%d")}.log')
 
 # 删除原先的日志
-os.remove(log_file_latest)
+try:
+    os.remove(log_file_latest)
+except FileNotFoundError:
+    pass
 
 # 配置Loguru日志记录器
 # logger.add(log_file, encoding='utf-8', backtrace=True, diagnose=True)

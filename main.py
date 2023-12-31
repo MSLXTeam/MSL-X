@@ -35,8 +35,8 @@ from Plugins.tools.EventTools import EventHandler
 from Plugins.tools.InfoClasses import handlers, MSLXEvents
 from lib.confctl import (
     ConfCtl,
-    LoadServerInfoToServer,
-    SaveServerInfoToConf
+    load_info_to_server,
+    save_server_to_conf
 )
 from lib.crypt.AES import AES_encrypt
 from lib.crypt.RSA import RSA_encrypt
@@ -57,19 +57,26 @@ if TYPE_CHECKING:
 
 @logger.catch
 def main(page: 'Page'):
-    # PluginEntry.before_run("main", page)
-    if not os.path.exists("Config/Default.json"):  # 如果默认配置不存在就保存默认配置
-        conf = ConfCtl("Default")
-        conf.Save_Config()
-    current_server = LoadServerInfoToServer()
-    programinfo = ProgramInfo()
-    hitokoto = programinfo.hitokoto
-    text = hitokoto["hitokoto"][:-1]
-
     create_dirs = ["Config", "Logs", "Crypt"]
     for dir_name in create_dirs:
         if not os.path.exists(dir_name):
             os.mkdir(dir_name)
+    if not os.path.exists("Config/Default.json"):  # 如果默认配置不存在就保存默认配置
+        conf = ConfCtl("Default")
+        conf.save_config()
+        logger.info("已保存默认配置")
+    global available_config_list
+    available_config_list = []
+    for _, _, files in os.walk("Config"):
+        for file in files:
+            if file.endswith(".json"):
+                available_config_list.append(file)
+    logger.info(f"可用的配置文件列表:{','.join(available_config_list)}")
+    current_server = load_info_to_server()
+    current_server.convert_list2str()
+    programinfo = ProgramInfo()
+    hitokoto = programinfo.hitokoto
+    text = hitokoto["hitokoto"][:-1]
 
     def init_page():
 
@@ -101,7 +108,7 @@ def main(page: 'Page'):
         programinfo.running_server_list.append(current_server)
 
     def StartServerEvent(fe):
-        lst = handlers.get(MSLXEvents.StartServerEvent)
+        lst = handlers.get(MSLXEvents.StartServerEvent.value)
         for func in lst:
             try:
                 func(fe)
@@ -132,32 +139,35 @@ def main(page: 'Page'):
         )
 
         global txt_server_option
-        current_server.convert_list2str()
         txt_server_option = TextField(
             label="服务器启动参数",
             width=300,
-            value=current_server.server_option_str,
+            value=' '.join(current_server.server_options),
             read_only=True
         )
 
         global dd_choose_java
         dd_choose_java = Dropdown(
-            label="Java选择",
+            label="执行方式选择",
             options=[
-                dropdown.Option("Path"),
-                dropdown.Option("手动选择一个文件"),
+                dropdown.Option("Java(Path)"),
+                dropdown.Option("Binary"),
+                dropdown.Option("手动选择Java"),
             ],
             on_change=change_java
         )
-        global txt_server_name
+        global txt_server_name, btn_detect_java
         btn_show_java_path = ElevatedButton(
             "显示Java路径", on_click=show_java_path
+        )
+        btn_detect_java = ElevatedButton(
+            "检测Java", on_click=detect_java, disabled=True
         )
         btn_select_server_path = ElevatedButton(
             "选取服务端路径", on_click=select_server_path
         )
         txt_server_name = TextField(
-            label="服务端名称(不需要.jar后缀),默认为server", width=300
+            label="服务端名称(不需要后缀名),默认为server", width=300
         )
 
         global sr_ram, text_xms, text_xmx
@@ -199,7 +209,8 @@ def main(page: 'Page'):
                 Row(
                     controls=[
                         dd_choose_java,
-                        btn_show_java_path
+                        btn_show_java_path,
+                        btn_detect_java,
                     ],
                     alignment=MainAxisAlignment.END
                 ),
@@ -225,7 +236,7 @@ def main(page: 'Page'):
             assert current_server is not None
             file_result = e.files[0].path
             if file_result:
-                current_server.use_java = file_result
+                current_server.executor = file_result
             else:
                 alert_warn_not_chosed_java = AlertDialog(
                     title=Text("选择Java失败,请重新选择"),
@@ -239,20 +250,22 @@ def main(page: 'Page'):
                 page.update()
 
         java_option = dd_choose_java.value
-        if java_option == 'Path':
-            current_server.use_java = 'java'
+        if java_option == 'Java(Path)':
+            current_server.executor = 'java'
+        elif java_option == 'Binary':
+            current_server.executor = ''
         elif java_option == '手动选择一个文件':
             picker = FilePicker(on_result=get_result)
             page.overlay.append(picker)
             page.update()
             picker.pick_files(dialog_title="选择Java路径")
         elif java_option in java_result:
-            current_server.use_java = java_result[java_option]['path']
+            current_server.executor = java_result[java_option]['path']
 
     def show_java_path(e):
         assert current_server is not None
         alert_show_java_path = AlertDialog(
-            title=Text(f"Java路径(若为java则使用环境变量):{current_server.use_java}"),
+            title=Text(f"Java路径(若为java则使用环境变量):{current_server.executor}"),
             modal=True,
             open=True
         )
@@ -387,7 +400,7 @@ def main(page: 'Page'):
                 logger.debug(f"获取到的文件路径:{file_result}")
                 if "json" not in file_result:
                     file_result += ".json"
-                current_server = SaveServerInfoToConf(current_server, full_path=file_result)
+                current_server = save_server_to_conf(current_server, full_path=file_result)
                 warn_conf = AlertDialog(
                     modal=False,
                     title=Text("保存配置文件成功"),
@@ -432,7 +445,7 @@ def main(page: 'Page'):
                 src_path = file_result[0].path
                 logger.debug(f"获取到的文件名:{file_name}")
                 logger.debug(f"获取到的文件路径:{src_path}")
-                current_server = LoadServerInfoToServer(full_path=src_path)
+                current_server = load_info_to_server(full_path=src_path)
                 warn_conf = AlertDialog(
                     modal=False,
                     title=Text("加载配置文件成功"),
@@ -773,6 +786,15 @@ def main(page: 'Page'):
                 page.add(row_top)
                 page.update()
 
+        else:  # 开始调用KeyboardShortcutEvent
+            handler = handlers.get(MSLXEvents.KeyboardShortcutEvent.value)
+            if handler:
+                for func in handler:
+                    try:
+                        func(dict(key=key, shift=shift, ctrl=ctrl, alt=alt, meta=meta))
+                    except Exception as e:
+                        logger.error(f"执行KeyboardShortcutEvent时出现错误:{e}")
+
     def submit_cmd(e):
         nonlocal current_server
         assert current_server is not None
@@ -811,7 +833,7 @@ def main(page: 'Page'):
             clrpage()
             logs.init_page(page)
             text_server_logs = TextField(label="服务器输出", value="Minecraft Server Logs Here...", read_only=True,
-                                         multiline=True, width=page.width-420, height=450)
+                                         multiline=True, width=page.width - 420, height=450)
             txt_command = TextField(label="在此键入向服务器发送的命令", on_submit=submit_cmd)
             btn_refresh = ElevatedButton("刷新", on_click=refresh)
             page.add(
@@ -833,11 +855,10 @@ def main(page: 'Page'):
             installed_plugin = ""
 
             for i in Pluginlist:
-                c = i['class']
-                text = (f"\n ## {c.name}\n\n"
-                        f"> {c.description}\n\n"
-                        f"作者:{c.author}\n\n"
-                        f"版本:{c.version}\n\n")
+                text = (f"\n ## {i.name}\n\n"
+                        f"> {i.description}\n\n"
+                        f"作者:{i.author}\n\n"
+                        f"版本:{i.version}\n\n")
                 installed_plugin += text
 
             def close(e):
@@ -845,7 +866,7 @@ def main(page: 'Page'):
                 page.update()
 
             about = AlertDialog(
-                title=Text("MSLX 0.0.9b"),
+                title=Text("MSLX 0.1.0b"),
                 content=Markdown(f"[Repository Here](https://github.com/MSLXTeam/MSL-X)\n\nCopyleft MojaveHao and all "
                                  f"contributors\n\n# 安装的插件:\n{installed_plugin}"),
                 actions=[TextButton("确认", on_click=close)],
@@ -880,7 +901,6 @@ def main(page: 'Page'):
             case 2:
                 # frpcpage()
                 for func in (handler := handlers.get(MSLXEvents.SelectFrpcPageEvent.value)):
-                    logger.debug(handler)
                     try:
                         func()
                     except Exception as e:
@@ -896,6 +916,29 @@ def main(page: 'Page'):
             case 6:
                 cconfigpage()
 
+    def detect_java(e):
+        handler = handlers.get(MSLXEvents.SearchJavaEvent.value)
+        if handler:
+            logger.debug("准备开始搜索Java")
+            global java_result
+            java_result = {}
+            # 调用查找Java的Handler
+            for func in handler:
+                try:
+                    java_result = func()
+                except Exception as e:
+                    logger.error(f"检测Java时出现错误:{e}")
+                    java_result = {}
+                    continue
+                else:
+                    break
+            if java_result != {}:
+                exist_java = [item.text for item in dd_choose_java.options]
+                for j in java_result.keys():
+                    if j not in exist_java:
+                        dd_choose_java.options.append(dropdown.Option(j))
+                page.update()
+
     init_page()
     create_controls()
     page.update()
@@ -903,28 +946,11 @@ def main(page: 'Page'):
 
     # 初始化各个插件
     PluginEntry.initialize_plugin("main", page)
-    logger.debug("插件系统加载完毕")
-
-    handler = handlers.get(MSLXEvents.SearchJavaEvent.value)
-    if handler:
-        logger.debug("准备开始搜索Java")
-        global java_result
-        java_result = {}
-        # 调用查找Java的Handler
-        for func in handler:
-            logger.debug(handler)
-            try:
-                java_result = func()
-            except Exception as e:
-                logger.error(f"检测Java时出现错误:{e}")
-                java_result = {}
-                continue
-            else:
-                break
-        if java_result != {}:
-            for j in java_result.keys():
-                dd_choose_java.options.append(dropdown.Option(j))
-            page.update()
+    logger.debug("插件系统加载完毕,准备进行后续操作")
+    btn_detect_java.disabled = False
+    page.update(btn_detect_java)
+    detect_java(None)
+    logger.debug("所有后续工作已完成")
 
 
 app(target=main, assets_dir="assets")

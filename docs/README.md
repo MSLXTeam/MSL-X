@@ -318,7 +318,7 @@ cd /usr/local/nginx/sbin && ./nginx
 
 [![Security Status](https://www.murphysec.com/platform3/v31/badge/1731219173459054592.svg)](https://www.murphysec.com/console/report/1731219173408722944/1731219173459054592)
 
-MSLX 0.0.9b
+MSLX 0.1.0b
 
 Copyleft MojaveHao
 
