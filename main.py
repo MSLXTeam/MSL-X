@@ -165,9 +165,6 @@ def main(page: 'Page'):
             on_change=change_java
         )
         global txt_server_name, btn_detect_java
-        btn_show_java_path = ElevatedButton(
-            "显示Java路径", on_click=show_java_path
-        )
         btn_detect_java = ElevatedButton(
             "检测Java", on_click=detect_java, disabled=True
         )
@@ -194,6 +191,7 @@ def main(page: 'Page'):
         text_xmx = Text(f"最大内存:{current_server.xmx}G")
 
         nonlocal text
+        global btn_hitokoto
         btn_hitokoto = TextButton(text, on_click=open_hitokoto)
 
         global drawer_options
@@ -225,7 +223,6 @@ def main(page: 'Page'):
                 Row(
                     controls=[
                         dd_choose_java,
-                        btn_show_java_path,
                         btn_detect_java,
                     ],
                     alignment=MainAxisAlignment.END
@@ -278,19 +275,6 @@ def main(page: 'Page'):
         elif java_option in java_result:
             current_server.executor = java_result[java_option]['path']
         save_server_to_conf(current_server, current_server.config_name.split('.')[0])
-
-    def show_java_path(e):
-        assert current_server is not None
-        alert_show_java_path = AlertDialog(
-            title=Text(f"Java路径(若为java则使用环境变量):{current_server.executor}"),
-            modal=False,
-            open=True
-        )
-        page.add(alert_show_java_path)
-        page.update()
-        time.sleep(3)
-        alert_show_java_path.open = False
-        page.update()
 
     def select_server_path(e):
         nonlocal current_server
@@ -718,6 +702,9 @@ def main(page: 'Page'):
 
     def on_keyboard(e: KeyboardEvent):
 
+        nonlocal text
+        nonlocal hitokoto
+
         def clrpage():
             assert page.controls is not None
             page.controls.clear()
@@ -729,6 +716,12 @@ def main(page: 'Page'):
         alt = e.alt
         meta = e.meta
         if key == "F5":
+            nonlocal text
+            nonlocal hitokoto
+            programinfo.update_hitokoto()
+            hitokoto = programinfo.hitokoto
+            text = hitokoto["hitokoto"][:-1]
+            btn_hitokoto.text = text
             page.update()
         if alt and shift:
             global txt_passwd, dd_mode
@@ -904,15 +897,6 @@ def main(page: 'Page'):
             page.add(Row(controls=[navbar, Column(controls=[txt_download_threads, switch_theme])]))
             page.update()
 
-        def cconfigpage():
-            clrpage()
-            confcl.init_page(page)
-            btn_save_config = ElevatedButton("保存服务器配置", on_click=save_config)
-            btn_load_config = ElevatedButton("加载服务器配置", on_click=load_config)
-            page.add(
-                Row(controls=[navbar, Column(controls=[btn_save_config, btn_load_config])]))
-            page.update()
-
         index = e.control.selected_index
 
         match index:
@@ -935,8 +919,6 @@ def main(page: 'Page'):
                 showinfo()
             case 5:
                 settingspage()
-            case 6:
-                cconfigpage()
 
     def detect_java(e):
         handler = handlers.get(MSLXEvents.SearchJavaEvent.value)
