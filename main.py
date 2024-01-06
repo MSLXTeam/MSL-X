@@ -869,7 +869,7 @@ def main(page: 'Page'):
                 installed_plugin += text
 
             about = AlertDialog(
-                title=Text("MSLX 0.1.0b"),
+                title=Text("MSLX 0.1.1b"),
                 content=Markdown(f"[Repository Here]("
                                  f"https://github.com/MSLXTeam/MSL-X)\n\nCopyleft MojaveHao and all"
                                  f"contributors\n\n# 安装的插件:\n{installed_plugin}"),

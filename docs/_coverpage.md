@@ -1,6 +1,6 @@
 ![logo](logo.png)
 
-# MSL-X <small>0.1.0b</small>
+# MSL-X <small>0.1.1b</small>
 
 > MSLX的预览版本
 
