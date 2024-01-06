@@ -2,20 +2,20 @@ import subprocess as sp
 from typing import Any
 
 
-class aira2ctl:
+class AriaCtl:
 
-    def __init__(self, aira_path: str = "", aira_cmdoptions=None, aira_name: str = "aira2c",
-                 enable_log_file: str = "aira2c_log.txt", dry_run: bool = False, max_concurrent_downloads: int = 5,
+    def __init__(self, aria_path: str = "", aria_cmdoptions=None, aria_name: str = "aria2c",
+                 enable_log_file: str = "aria2c_log.txt", dry_run: bool = False, max_concurrent_downloads: int = 5,
                  split: int = 8, enable_check: Any = False, enable_http_proxy: bool = False, timeout: int = 60,
                  max_connection_per_server: int = 1, max_try_times: int = 10, retry_wait_sec: int = 2,
                  min_split_size: int = 1, ):
-        if aira_cmdoptions is None:
-            aira_cmdoptions = ['']
-        self.aira_path = aira_path
-        self.aira_name = aira_name
-        self.aira_cmdoptions = aira_cmdoptions
+        if aria_cmdoptions is None:
+            aria_cmdoptions = ['']
+        self.aria_path = aria_path
+        self.aria_name = aria_name
+        self.aria_cmdoptions = aria_cmdoptions
         self.enable_check = enable_check
-        self.aira2c = None
+        self.aria2c = None
         self.included_options = [
             f"--log={enable_log_file}",
             f"--max-concurrent-downloads={max_concurrent_downloads}",
@@ -60,9 +60,9 @@ class aira2ctl:
             else:
                 raise Exception
 
-    def start(self, download_name: str, download_path: str, download_url: str, download_opti: list[str] = ['']):
+    def start(self, download_name: str, download_path: str, download_url: str, download_opti: list[str] = ''):
         if not download_opti:
-            download_opti = self.aira_cmdoptions
+            download_opti = self.aria_cmdoptions
         download_opti += self.included_options
         download_opti.append(f"--out={download_name}")
         download_opti.append(f"--dir={download_path}")
@@ -70,11 +70,11 @@ class aira2ctl:
         download_opti_str = ""
         for item in download_opti:
             download_opti_str += item
-        self.aira2c = sp.run(self.aira_path + download_opti_str)
+        self.aria2c = sp.run(self.aria_path + download_opti_str)
 
     def check(self):
         if isinstance(self.enable_check, dict):
             check_method = self.enable_check["method"]
             check_sum = self.enable_check["sum"]
             check_opti = f"--checksum={check_method}={check_sum}"
-            self.aira2c = sp.run(self.aira_path + check_opti)
+            self.aria2c = sp.run(self.aria_path + check_opti)

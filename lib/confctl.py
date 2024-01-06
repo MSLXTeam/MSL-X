@@ -33,6 +33,7 @@ class ConfCtl:
                 "-Dusing.aikars.flags=mcflags.emc.gs"
             ]
         self.options_str = ""
+        self.conf_name = ""
         if full_path == "":
             self.path = f'Config{sep}{name}.json'
         else:
@@ -41,8 +42,8 @@ class ConfCtl:
     @logger.catch
     def load_config(self):
         with open(self.path, 'r', encoding='utf-8') as fl:
-            conf_dict = json.load(fl)
             try:
+                conf_dict = json.load(fl)
                 self.xms = conf_dict["xms"]
                 self.xmx = conf_dict["xmx"]
                 self.java = conf_dict["java"]
@@ -51,9 +52,10 @@ class ConfCtl:
                 self.description = conf_dict["description"]
                 self.process_options = conf_dict["jvm_options"]
                 self.name = conf_dict["name"]
-            except KeyError:
+                self.conf_name = self.path.split('/')[-1].split('\\')[-1].split('.')[0]
+            except:
                 self.save_config()
-                logger.warning("检测到配置文件损坏,已写入默认设置")
+                logger.warning(f"检测到配置文件{self.path}损坏,已写入默认设置")
 
     @logger.catch
     def save_config(self):
@@ -77,7 +79,7 @@ def load_info_to_server(name: str = "Default", full_path=""):
     cfctl.load_config()
     server = SingleServerInfo(executor=cfctl.java, xms=cfctl.xms, xmx=cfctl.xmx, server_path=cfctl.server_path,
                               server_file=cfctl.server, descr=cfctl.description, name=cfctl.name,
-                              server_options=cfctl.process_options)
+                              server_options=cfctl.process_options, config_name=cfctl.conf_name)
     return server
 
 

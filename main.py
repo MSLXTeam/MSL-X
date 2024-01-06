@@ -14,19 +14,27 @@ from flet import (
     Theme,
     Column,
     Switch,
-    dropdown,
+    Divider,
     Dropdown,
     Markdown,
+    Container,
     TextField,
     TextButton,
     FilePicker,
     RangeSlider,
-    FilePickerFileType,
-    FilePickerResultEvent,
-    KeyboardEvent,
+    ThemeMode,
+    Segment,
+    dropdown,
     AlertDialog,
     ElevatedButton,
+    SegmentedButton,
+    ScrollMode,
     MainAxisAlignment,
+    KeyboardEvent,
+    NavigationDrawer,
+    NavigationDrawerDestination,
+    FilePickerFileType,
+    FilePickerResultEvent,
 )
 
 import PluginEntry
@@ -43,13 +51,11 @@ from lib.crypt.RSA import RSA_encrypt
 from lib.info_classes import ProgramInfo
 from lib.log import logger
 from ui import (
-    confcl,
     frpconfig,
-    logs,
     nginxconf,
     settings
 )
-from ui.Navbar import nav_side as navbar
+from ui.Navbar import nav_side as navbar, btn as btn_select_config
 
 if TYPE_CHECKING:
     from flet import Page
@@ -77,6 +83,7 @@ def main(page: 'Page'):
     programinfo = ProgramInfo()
     hitokoto = programinfo.hitokoto
     text = hitokoto["hitokoto"][:-1]
+    drawer = NavigationDrawer(controls=[Container(height=13)])
 
     def init_page():
 
@@ -89,10 +96,11 @@ def main(page: 'Page'):
         page.theme = theme_day
         page.dark_theme = theme_dark
         page.on_keyboard_event = on_keyboard
+        page.scroll = ScrollMode.AUTO
+        page.drawer = drawer
         programinfo.update_hitokoto()
         if programinfo.title != "":
             page.title = programinfo.title
-
         page.update()
 
     @EventHandler(MSLXEvents.StartServerEvent)
@@ -188,6 +196,14 @@ def main(page: 'Page'):
         nonlocal text
         btn_hitokoto = TextButton(text, on_click=open_hitokoto)
 
+        global drawer_options
+        drawer_options = Container(Row(controls=[Divider()]))
+        btn_select_config.on_click = expand_config_select
+        for i in available_config_list:
+            page.drawer.controls.append(NavigationDrawerDestination(label=i))
+        page.drawer.controls.append(drawer_options)
+        page.update()
+
         ui_main = Row(controls=[
             navbar,
             Column(controls=[
@@ -261,12 +277,13 @@ def main(page: 'Page'):
             picker.pick_files(dialog_title="选择Java路径")
         elif java_option in java_result:
             current_server.executor = java_result[java_option]['path']
+        save_server_to_conf(current_server, current_server.config_name.split('.')[0])
 
     def show_java_path(e):
         assert current_server is not None
         alert_show_java_path = AlertDialog(
             title=Text(f"Java路径(若为java则使用环境变量):{current_server.executor}"),
-            modal=True,
+            modal=False,
             open=True
         )
         page.add(alert_show_java_path)
@@ -291,6 +308,7 @@ def main(page: 'Page'):
             file_result = e.path
             if file_result:
                 current_server.server_path = file_result
+                save_server_to_conf(current_server, current_server.config_name.split('.')[0])
             else:
                 alert_warn_not_chosed_java = AlertDialog(
                     title=Text("选择服务端路径失败,请重新选择"),
@@ -439,6 +457,7 @@ def main(page: 'Page'):
                 warn_conf.open = False
                 page.update()
 
+            nonlocal current_server
             file_result = e.files
             if file_result:
                 file_name = file_result[0].name
@@ -539,8 +558,6 @@ def main(page: 'Page'):
 
         def detect_ng_winpath(e):
 
-            nonlocal close
-
             def copy(e):
                 clip.copy(f"Path:{ng_path}\nNginx -V Info:{ngv}")
 
@@ -633,10 +650,6 @@ def main(page: 'Page'):
         assert txt_passwd is not None
         assert txt_passwd.value is not None
 
-        def close(e):
-            finish.open = False
-            page.update()
-
         def copy_rsa(e):
             content = f"[RSA Login Info]\nPrivate Key:{result}\nPublic Key:\n{second_key}"
             clip.copy(content)
@@ -653,7 +666,7 @@ def main(page: 'Page'):
             second_key = aes_key
             finish = AlertDialog(title=Text("完成"), content=Text(
                 f"你已经完成了AES加密密码的创建流程,信息如下:\nPasswd:{result}\nKey:{aes_key}"), actions=[
-                TextButton("确认", on_click=close),
+                TextButton("确认", on_click=lambda _: close_warn(finish)),
                 TextButton("复制信息到剪贴板", on_click=copy_aes),
             ], open=True)
             page.add(finish)
@@ -672,7 +685,7 @@ def main(page: 'Page'):
             finish = AlertDialog(title=Text("完成！"), content=Text(
                 f"你已经完成了RSA加密密钥的创建流程,信息如下:\nPrivate Key:{result}\nPublic Key:\n{second_key}"),
                                  actions=[
-                                     TextButton("确认", on_click=close),
+                                     TextButton("确认", on_click=lambda _: close_warn(finish)),
                                      TextButton("复制信息到剪贴板", on_click=copy_rsa),
                                  ], open=True)
             page.add(finish)
@@ -720,9 +733,6 @@ def main(page: 'Page'):
         if alt and shift:
             global txt_passwd, dd_mode
             if key == "D":  # 更新依赖项
-                def close(e):
-                    warn_ok.open = False
-                    page.update()
 
                 logger.info("准备更新依赖")
                 sp.run("pipreqs --mode no-pin ./ --encoding=utf8  --debug --force")
@@ -734,7 +744,7 @@ def main(page: 'Page'):
                     title=Text("更新完成"),
                     content=Text(f"已完成依赖项的检测和下载/更新工作"),
                     actions=[
-                        TextButton("确定", on_click=close),
+                        TextButton("确定", on_click=lambda _: close_warn(warn_ok)),
                     ],
                     open=True
                 )
@@ -831,9 +841,11 @@ def main(page: 'Page'):
             nonlocal submit_cmd, refresh
             global txt_command, text_server_logs
             clrpage()
-            logs.init_page(page)
+            programinfo.page = "日志"
+            page.window_width = 900
+            page.title = programinfo.title
             text_server_logs = TextField(label="服务器输出", value="Minecraft Server Logs Here...", read_only=True,
-                                         multiline=True, width=page.width - 420, height=450)
+                                         multiline=True, width=page.width - 320, height=450)
             txt_command = TextField(label="在此键入向服务器发送的命令", on_submit=submit_cmd)
             btn_refresh = ElevatedButton("刷新", on_click=refresh)
             page.add(
@@ -843,7 +855,9 @@ def main(page: 'Page'):
         @EventHandler(MSLXEvents.SelectFrpcPageEvent)
         def frpcpage():
             clrpage()
-            frpconfig.init_page(page)
+            programinfo.page = "设置"
+            page.window_width = 700
+            page.title = programinfo.title
             frpconfig.create_controls(page)
             page.update()
 
@@ -856,20 +870,17 @@ def main(page: 'Page'):
 
             for i in Pluginlist:
                 text = (f"\n ## {i.name}\n\n"
-                        f"> {i.description}\n\n"
+                        f"### {i.description}\n\n"
                         f"作者:{i.author}\n\n"
                         f"版本:{i.version}\n\n")
                 installed_plugin += text
 
-            def close(e):
-                about.open = False
-                page.update()
-
             about = AlertDialog(
                 title=Text("MSLX 0.1.0b"),
-                content=Markdown(f"[Repository Here](https://github.com/MSLXTeam/MSL-X)\n\nCopyleft MojaveHao and all "
+                content=Markdown(f"[Repository Here]("
+                                 f"https://github.com/MSLXTeam/MSL-X)\n\nCopyleft MojaveHao and all"
                                  f"contributors\n\n# 安装的插件:\n{installed_plugin}"),
-                actions=[TextButton("确认", on_click=close)],
+                actions=[TextButton("确认", on_click=lambda _: close_warn(about))],
                 modal=True,
                 open=True,
             )
@@ -879,7 +890,18 @@ def main(page: 'Page'):
         def settingspage():
             clrpage()
             settings.init_page(page)
-            settings.create_controls(page)
+            switch_theme = SegmentedButton(
+                on_change=change_theme,
+                selected={"跟随系统"},
+                allow_empty_selection=False,
+                allow_multiple_selection=False,
+                segments=[
+                    Segment("跟随系统", label=Text("跟随系统")), Segment("明亮", label=Text("明亮")),
+                    Segment("黑暗", label=Text("黑暗"))
+                ]
+            )
+            txt_download_threads = TextField(label="下载线程数", value="16")
+            page.add(Row(controls=[navbar, Column(controls=[txt_download_threads, switch_theme])]))
             page.update()
 
         def cconfigpage():
@@ -939,6 +961,72 @@ def main(page: 'Page'):
                         dd_choose_java.options.append(dropdown.Option(j))
                 page.update()
 
+    def change_theme(e):
+        assert page is not None
+        mode = str(e.data).split('"')[1]
+        match mode:
+            case "跟随系统":
+                page.theme_mode = ThemeMode.SYSTEM
+            case "明亮":
+                page.theme_mode = ThemeMode.LIGHT
+            case "黑暗":
+                page.theme_mode = ThemeMode.DARK
+        page.update()
+
+    def close_warn(obj: AlertDialog):
+        obj.open = False
+        page.update(obj)
+
+    def expand_config_select(e):
+        assert page is not None
+        drawer_selections = set([selection.label for selection in
+                                 filter(lambda x: isinstance(x, NavigationDrawerDestination), drawer.controls)])
+        drawer.controls = ([Container(height=13)] + [NavigationDrawerDestination(label=i) for i in drawer_selections] +
+                           [drawer_options])
+        page.drawer.open = True
+        page.update()
+
+    def select_config(e):
+        nonlocal current_server
+        assert page is not None
+
+        index = drawer.selected_index
+        index_item = drawer.controls[index+1]
+        if isinstance(index_item, NavigationDrawerDestination):
+            target_conf_name = index_item.label
+        else:
+            target_conf_name = available_config_list[index]
+        current_conf_name = current_server.config_name
+        target_server = load_info_to_server(name=target_conf_name.split('.')[0])
+        if current_conf_name != target_conf_name:
+            def select_to_new_config(e):
+                close_warn(warn_select)
+                nonlocal current_server
+                current_server = target_server
+                programinfo.running_server_list.append(current_server)
+                programinfo.running_server_list = list(set(programinfo.running_server_list))
+                txt_server_name.value = current_server.server
+                current_server.convert_list2str()
+                txt_server_option.value = current_server.server_option_str
+                page.update()
+
+            warn_select = AlertDialog(
+                modal=False,
+                open=True,
+                title=Text("是否切换到新的配置文件?"),
+                content=Markdown(
+                    f"## {target_server.name}\n\n"
+                    f"{target_server.descr}\n\n"
+                    f"配置文件:{target_conf_name}\n\n"),
+                actions=[
+                    ElevatedButton("确定切换", on_click=select_to_new_config),
+                    TextButton("取消", on_click=lambda _: close_warn(warn_select))
+                ]
+            )
+
+            page.add(warn_select)
+            page.update()
+
     init_page()
     create_controls()
     page.update()
@@ -948,8 +1036,9 @@ def main(page: 'Page'):
     PluginEntry.initialize_plugin("main", page)
     logger.debug("插件系统加载完毕,准备进行后续操作")
     btn_detect_java.disabled = False
-    page.update(btn_detect_java)
     detect_java(None)
+    drawer.on_change = select_config
+    page.update()
     logger.debug("所有后续工作已完成")
 
 

@@ -22,19 +22,6 @@ protocol = "tcp"
 remote_port = random.randint(20000, 60000)
 
 
-def init_page(page):
-    page.theme = Theme(font_family="SHS_SC")
-    page.title = "MSLX | Frpc设置"
-    page.window_width = 700
-    page.window_height = 600
-    page.fonts = {
-        "SHS_TC": "fonts/SourceHanSansTC-Regular.otf",
-        "SHS_SC": "fonts/SourceHanSansSC-Regular.otf"
-    }
-    page.theme = Theme(font_family="SHS_SC")
-    page.update()
-
-
 def create_controls(page):
     def start_frpc(e):
 

@@ -14,7 +14,8 @@ import math
 proxy = {'http': 'localhost:7890'}
 # 请求头
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36 QIHU 360SE'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 '
+                  'Safari/537.36 QIHU 360SE'
 }
 # 定义 1 MB 多少为 B
 MB = 1024 ** 2

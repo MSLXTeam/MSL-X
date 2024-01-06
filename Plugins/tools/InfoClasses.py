@@ -17,6 +17,7 @@ class MSLXEvents(Enum):  # 事件类型枚举
 
     # 其他事件
     KeyboardShortcutEvent = "KeyboardShortcutEvent"
+    UnexpectedServerStoppedEvent = "UnexpectedServerStoppedEvent"
 
 
 class InfoTypes(Enum):  # 信息类型枚举
@@ -32,7 +33,8 @@ handlers = {
     MSLXEvents.SelectFrpcPageEvent.value: [],
     MSLXEvents.SelectAboutPageEvent.value: [],
     MSLXEvents.SearchJavaEvent.value: [],
-    MSLXEvents.KeyboardShortcutEvent.value: []
+    MSLXEvents.KeyboardShortcutEvent.value: [],
+    MSLXEvents.UnexpectedServerStoppedEvent.value: [],
 }
 
 
