@@ -7,8 +7,8 @@ from platform import system
 from re import search
 from typing import List, Optional
 
-from Plugins.tools.InfoClasses import MSLXEvents
 from Plugins.tools.EventTools import EventHandler
+from Plugins.tools.InfoClasses import MSLXEvents
 from Plugins.tools.InfoClasses import UniversalInfo, InfoTypes
 from Plugins.tools.PluginTools import AddPluginInfo
 

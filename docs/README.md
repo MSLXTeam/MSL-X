@@ -34,7 +34,7 @@
 
   现在请您先输入```python --version```查看现存Python版本,3.10以下都不可以运行
 
-- 如果您是Python2.x,请在终端输入sudo apt remove --auto-remove python2.x 来移除Python2(把x换成后面的版本号)
+- 如果您是Python2.x,请在终端输入```sudo apt remove --auto-remove python```来移除Python2
   ,然后按照Python3.x-Python3.10以下处理
 - 如果您是Python3.x:
 
@@ -65,33 +65,53 @@
           ln -s (上面的路径) /usr/bin/python
           ```
 
+### 部署项目
+
+#### Poetry方式(推荐)
+
+- 安装依赖
+
+```bash
+git clone https://github.com/MSLXTeam/MSL-X.git
+cd MSL-X
+poetry install
+```
+
+- 启动
+
+```bash
+poetry run start
+```
+
+#### 全局
+
+- 安装依赖
+
+```bash
+git clone https://github.com/MSLXTeam/MSL-X.git
+cd MSL-X
+sudo pip install -r requirements.txt -U
+```
+
+- 启动
+
+```bash
+python main.py
+```
+
 #### Arch特编
 
-##### 您只需要运行以下命令,便可安装Python3.10:
+##### 您只需要运行以下命令,便可安装Python3.11和pip:
 
-``pacman -S python``
+```bash
+sudo pacman -S python python-pip
+```
 
 ##### 其他
 
 - 恭喜您选择了Arch Linux!
 - 由于最新版本的Arch Linux已经停止了Python3.7以前版本的支持,本文不做说明
-- 如果您希望使用Python311,请您使用AUR:
 
-    - 使用paru
-
-        - 安装
-
-      ```bash
-      sudo pacman -S paru-git
-      ```
-
-        - 使用
-
-            - 它的语法和pacman一致.
-            - 示例: 您可以通过以下语句来安装Python3.11:
-              ```bash
-              paru -S python311
-              ```
 
 ### 安装依赖
 
