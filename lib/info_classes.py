@@ -56,14 +56,14 @@ class SingleServerInfo:
             server_file_path += ".jar"
         args = ([self.executor, f'-Xms{self.xms}G', f'-Xmx{self.xmx}G'] + self.server_options +
                 ['-jar' if self.type_is_java else '', f"{server_file_path}"])
-        print(args)
         self.server = sp.Popen(
             args=args,
             cwd=self.server_path,
             text=True,
             stdin=sp.PIPE,
             stdout=sp.PIPE,
-            stderr=sp.PIPE
+            stderr=sp.PIPE,
+            start_new_session=True,
         )
 
     def convert_list2str(self):

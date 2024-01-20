@@ -1,11 +1,14 @@
+import copy
 import math
 import os
 import subprocess as sp
+import sys
 import time
 import webbrowser as wb
 from typing import TYPE_CHECKING
 
 import pyperclip as clip
+import pytomlpp
 from Crypto.PublicKey import RSA
 from flet import (
     app,
@@ -53,7 +56,6 @@ from lib.log import logger
 from ui import (
     frpconfig,
     nginxconf,
-    settings
 )
 from ui.Navbar import nav_side as navbar, btn as btn_select_config
 
@@ -90,9 +92,9 @@ def main(page: 'Page'):
         nonlocal current_server, programinfo
         page.window_height = 600
         page.window_width = 1050
-        page.fonts = dict(SHS_TC="fonts/SourceHanSansTC-Regular.otf", SHS_SC="fonts/SourceHanSansSC-Regular.otf")
-        theme_dark = Theme(font_family="SHS_SC", color_scheme_seed="#1f1e33")
-        theme_day = Theme(font_family="SHS_SC")
+        page.fonts = dict(HMOSSans="fonts/HarmonyOS_Sans_SC_Regular.ttf", SHS_SC="fonts/SourceHanSansSC-Regular.otf")
+        theme_dark = Theme(font_family="HMOSSans", color_scheme_seed="#1f1e33")
+        theme_day = Theme(font_family="HMOSSans")
         page.theme = theme_day
         page.dark_theme = theme_dark
         page.on_keyboard_event = on_keyboard
@@ -101,6 +103,13 @@ def main(page: 'Page'):
         programinfo.update_hitokoto()
         if programinfo.title != "":
             page.title = programinfo.title
+        if os.path.exists("Config/mslx.toml"):
+            with open("Config/mslx.toml", encoding="utf-8") as f:
+                data = pytomlpp.load(f)
+                style = data.get("style", {})
+                process_theme_config(style)
+        else:
+            pytomlpp.dump({},"Config/mslx.toml")
         page.update()
 
     @EventHandler(MSLXEvents.StartServerEvent)
@@ -727,21 +736,29 @@ def main(page: 'Page'):
             global txt_passwd, dd_mode
             if key == "D":  # 更新依赖项
 
-                logger.info("准备更新依赖")
-                sp.run("pipreqs --mode no-pin ./ --encoding=utf8  --debug --force")
-                logger.info("已更新requirements.txt")
-                sp.run("pip install -r requirements.txt --upgrade")
-                logger.info("已下载/更新了所有MSLX所依赖的包")
-                warn_ok = AlertDialog(
-                    modal=False,
-                    title=Text("更新完成"),
-                    content=Text(f"已完成依赖项的检测和下载/更新工作"),
+                def poetry(e):
+                    logger.info("准备更新依赖")
+                    sp.run("poetry lock && poetry update", start_new_session=True)
+                    sys.exit()
+
+                def upd_global(e):
+                    logger.info("准备更新依赖")
+                    sp.run("pipreqs --mode no-pin ./ --encoding=utf8  --debug --force")
+                    logger.info("已更新requirements.txt")
+                    sp.run("pip install -r requirements.txt --upgrade", start_new_session=True)
+                    sys.exit()
+
+                warn_update = AlertDialog(
+                    title=Text("是否尝试更新依赖项?"),
+                    content=Text("如果选择更新依赖项,请在下面选择你运行msl-x时的方式,否则请点取消;选择后将会强制退出msl-x主程序,请确保已经关闭了所有服务器,否则可能造成数据丢失"),
                     actions=[
-                        TextButton("确定", on_click=lambda _: close_warn(warn_ok)),
-                    ],
-                    open=True
+                        ElevatedButton("Poetry",on_click=poetry),
+                        ElevatedButton("Global", on_click=upd_global),
+                        ElevatedButton("取消", on_click=lambda _: close_warn(warn_update))
+                    ]
                 )
-                page.add(warn_ok)
+
+                page.add(warn_update)
                 page.update()
 
             elif key == "N":  # 打开Nginx配置页面
@@ -788,6 +805,9 @@ def main(page: 'Page'):
                 row_top = Row(controls=[navbar, col_passwd_gen, btn_login])
                 page.add(row_top)
                 page.update()
+
+            elif key == "R":
+                logger.debug("准备开始重载配置文件")
 
         else:  # 开始调用KeyboardShortcutEvent
             handler = handlers.get(MSLXEvents.KeyboardShortcutEvent.value)
@@ -848,7 +868,7 @@ def main(page: 'Page'):
         @EventHandler(MSLXEvents.SelectFrpcPageEvent)
         def frpcpage():
             clrpage()
-            programinfo.page = "设置"
+            programinfo.page = "Frpc设置"
             page.window_width = 700
             page.title = programinfo.title
             frpconfig.create_controls(page)
@@ -867,12 +887,14 @@ def main(page: 'Page'):
                         f"作者:{i.author}\n\n"
                         f"版本:{i.version}\n\n")
                 installed_plugin += text
-
-            about = AlertDialog(
-                title=Text("MSLX 0.1.1b"),
-                content=Markdown(f"[Repository Here]("
+            message = Markdown(f"[Repository Here]("
                                  f"https://github.com/MSLXTeam/MSL-X)\n\nCopyleft MojaveHao and all"
-                                 f"contributors\n\n# 安装的插件:\n{installed_plugin}"),
+                                 f"contributors")
+            if installed_plugin:
+                message.value += f"\n\n# 安装的插件:\n{installed_plugin}"
+            about = AlertDialog(
+                title=Text("MSL-X 0.1.2b"),
+                content=message,
                 actions=[TextButton("确认", on_click=lambda _: close_warn(about))],
                 modal=True,
                 open=True,
@@ -882,7 +904,8 @@ def main(page: 'Page'):
 
         def settingspage():
             clrpage()
-            settings.init_page(page)
+            programinfo.page = "设置"
+            page.window_width = 900
             switch_theme = SegmentedButton(
                 on_change=change_theme,
                 selected={"跟随系统"},
@@ -973,7 +996,7 @@ def main(page: 'Page'):
         assert page is not None
 
         index = drawer.selected_index
-        index_item = drawer.controls[index+1]
+        index_item = drawer.controls[index + 1]
         if isinstance(index_item, NavigationDrawerDestination):
             target_conf_name = index_item.label
         else:
@@ -1009,19 +1032,63 @@ def main(page: 'Page'):
             page.add(warn_select)
             page.update()
 
+    def process_theme_config(theme_config: dict):
+        def change_theme(theme):
+            match theme.get("mode", "default"):
+                case "seed":
+                    result = theme.get("seed", "")
+                    if result != "":
+                        page.theme = Theme(color_scheme_seed=result, font_family="HMOSSans")
+                        page.update()
+                case "full":
+                    result = theme.get("config", {})
+                    if result != {}:
+                        page.theme = Theme(**result)
+                        if "font_family" not in result:
+                            page.theme.font_family="HMOSSans"
+                        page.update()
+
+        def change_font(origin_theme):
+            theme = copy.deepcopy(origin_theme)
+            if general := (theme.get("general", "")):
+                page.fonts["general"] = general
+                page.theme.font_family = general
+                page.dark_theme.font_family = general
+                page.update()
+                del theme["general"]
+
+        style_light = theme_config.get("light", {})
+        style_dark = theme_config.get("dark", {})
+        font = theme_config.get("font", {})
+        change_font(font)
+        change_theme(style_light)
+        change_theme(style_dark)
+        match theme_config.get("default_theme_mode", "system"):
+            case "system":
+                page.theme_mode = ThemeMode.SYSTEM
+            case "light":
+                page.theme_mode = ThemeMode.LIGHT
+            case "dark":
+                page.theme_mode = ThemeMode.DARK
+        page.update()
+
     init_page()
     create_controls()
     page.update()
-    logger.debug("页面完成初始化,准备开始加载插件系统")
-
-    # 初始化各个插件
-    PluginEntry.initialize_plugin("main", page)
-    logger.debug("插件系统加载完毕,准备进行后续操作")
-    btn_detect_java.disabled = False
-    detect_java(None)
-    drawer.on_change = select_config
     page.update()
-    logger.debug("所有后续工作已完成")
+    with open("Config/mslx.toml", encoding="utf-8") as f:
+        data = pytomlpp.load(f)
+        options = data.get("options", {})
+        enable_plugin = options.get("is_plugin_enabled", True)
+    if enable_plugin:
+        logger.debug("页面完成初始化,准备开始加载插件系统")
+        PluginEntry.initialize_plugin("main", page)
+        logger.debug("插件系统加载完毕,准备进行后续操作")
+        btn_detect_java.disabled = False
+        detect_java(None)
+        drawer.on_change = select_config
+        page.update()
+        logger.debug("所有后续工作已完成")
 
 
 app(target=main, assets_dir="assets")

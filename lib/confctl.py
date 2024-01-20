@@ -2,8 +2,6 @@ import json
 from os import sep
 from typing import Any
 
-import pytoml
-
 from .info_classes import SingleServerInfo
 from .log import logger
 
@@ -94,9 +92,3 @@ def save_server_to_conf(class_server: SingleServerInfo, name: str = "Default", f
     cfctl.description = class_server.descr
     cfctl.name = class_server.name
     cfctl.save_config()
-
-
-def read_software_settings():
-    with open("../Config/mslx.toml", encoding="utf-8", mode="rb") as f:
-        data = pytoml.load(f)
-        style = data.get("style")
