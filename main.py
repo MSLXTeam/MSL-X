@@ -109,7 +109,7 @@ def main(page: 'Page'):
                 style = data.get("style", {})
                 process_theme_config(style)
         else:
-            pytomlpp.dump({},"Config/mslx.toml")
+            pytomlpp.dump({}, "Config/mslx.toml")
         page.update()
 
     @EventHandler(MSLXEvents.StartServerEvent)
@@ -134,7 +134,7 @@ def main(page: 'Page'):
             else:
                 break
 
-    def create_controls():  # 设置控件
+    def create_controls(set_attr: bool = False):  # 设置控件
 
         navbar.on_change = change_navbar
         nonlocal current_server
@@ -164,18 +164,19 @@ def main(page: 'Page'):
         )
 
         global dd_choose_java
-        dd_choose_java = Dropdown(
-            label="执行方式选择",
-            options=[
-                dropdown.Option("Java(Path)"),
-                dropdown.Option("Binary"),
-                dropdown.Option("手动选择Java"),
-            ],
-            on_change=change_java
-        )
+        if set_attr:
+            dd_choose_java = Dropdown(
+                label="执行方式选择",
+                options=[
+                    dropdown.Option("Java(Path)"),
+                    dropdown.Option("Binary"),
+                    dropdown.Option("手动选择Java"),
+                ],
+                on_change=change_java
+            )
         global txt_server_name, btn_detect_java
         btn_detect_java = ElevatedButton(
-            "检测Java", on_click=detect_java, disabled=True
+            "检测Java", on_click=detect_java
         )
         btn_select_server_path = ElevatedButton(
             "选取服务端路径", on_click=select_server_path
@@ -210,6 +211,9 @@ def main(page: 'Page'):
             page.drawer.controls.append(NavigationDrawerDestination(label=i))
         page.drawer.controls.append(drawer_options)
         page.update()
+
+        if set_attr:
+            btn_detect_java.disabled = True
 
         ui_main = Row(controls=[
             navbar,
@@ -750,9 +754,10 @@ def main(page: 'Page'):
 
                 warn_update = AlertDialog(
                     title=Text("是否尝试更新依赖项?"),
-                    content=Text("如果选择更新依赖项,请在下面选择你运行msl-x时的方式,否则请点取消;选择后将会强制退出msl-x主程序,请确保已经关闭了所有服务器,否则可能造成数据丢失"),
+                    content=Text(
+                        "如果选择更新依赖项,请在下面选择你运行msl-x时的方式,否则请点取消;选择后将会强制退出msl-x主程序,请确保已经关闭了所有服务器,否则可能造成数据丢失"),
                     actions=[
-                        ElevatedButton("Poetry",on_click=poetry),
+                        ElevatedButton("Poetry", on_click=poetry),
                         ElevatedButton("Global", on_click=upd_global),
                         ElevatedButton("取消", on_click=lambda _: close_warn(warn_update))
                     ]
@@ -875,7 +880,7 @@ def main(page: 'Page'):
             page.update()
 
         def opendoc():
-            wb.open("https://mslxteam.github.io/MSL-X/#/")
+            wb.open("https://mslx.fun")
 
         def showinfo():
 
@@ -888,8 +893,8 @@ def main(page: 'Page'):
                         f"版本:{i.version}\n\n")
                 installed_plugin += text
             message = Markdown(f"[Repository Here]("
-                                 f"https://github.com/MSLXTeam/MSL-X)\n\nCopyleft MojaveHao and all"
-                                 f"contributors")
+                               f"https://github.com/MSLXTeam/MSL-X)\n\nCopyleft MojaveHao and all"
+                               f"contributors")
             if installed_plugin:
                 message.value += f"\n\n# 安装的插件:\n{installed_plugin}"
             about = AlertDialog(
@@ -929,7 +934,7 @@ def main(page: 'Page'):
                 logspage()
             case 2:
                 # frpcpage()
-                for func in (handler := handlers.get(MSLXEvents.SelectFrpcPageEvent.value)):
+                for func in (handlers.get(MSLXEvents.SelectFrpcPageEvent.value)):
                     try:
                         func()
                     except Exception as e:
@@ -960,7 +965,7 @@ def main(page: 'Page'):
                 else:
                     break
             if java_result != {}:
-                exist_java = [item.text for item in dd_choose_java.options]
+                exist_java = [item.key for item in dd_choose_java.options]
                 for j in java_result.keys():
                     if j not in exist_java:
                         dd_choose_java.options.append(dropdown.Option(j))
@@ -1045,7 +1050,7 @@ def main(page: 'Page'):
                     if result != {}:
                         page.theme = Theme(**result)
                         if "font_family" not in result:
-                            page.theme.font_family="HMOSSans"
+                            page.theme.font_family = "HMOSSans"
                         page.update()
 
         def change_font(origin_theme):
@@ -1073,7 +1078,7 @@ def main(page: 'Page'):
         page.update()
 
     init_page()
-    create_controls()
+    create_controls(True)
     page.update()
     page.update()
     with open("Config/mslx.toml", encoding="utf-8") as f:
