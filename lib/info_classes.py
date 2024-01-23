@@ -85,4 +85,7 @@ class ProgramInfo:
     def update_hitokoto(self):
         hitokoto_html = requests.get(
             url="https://v1.hitokoto.cn/?c=i&c=d&c=k&encode=json&charset=utf-8")
-        self.hitokoto = json.loads(hitokoto_html.text)
+        if hitokoto_html.status_code == 200:
+            self.hitokoto = json.loads(hitokoto_html.text)
+        else:
+            self.hitokoto = {"hitokoto": ""}

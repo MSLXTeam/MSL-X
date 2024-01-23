@@ -1,8 +1,8 @@
-import os
-import gc
 import importlib
+import os
 import threading
-from typing import Callable, Dict, Any
+import typing
+from typing import Dict, Any
 
 import lib.pubvars
 from Plugins.tools.PluginList import Pluginlist
@@ -10,7 +10,7 @@ from lib.log import logger
 
 global_var_lock = threading.Lock()
 
-all_events=  {}
+all_events = {}
 
 
 def process_event(event_key: str, event_value: Any, file_name: str, all_events: Dict[str, Dict[str, Any]]) -> None:
@@ -23,6 +23,7 @@ def process_event(event_key: str, event_value: Any, file_name: str, all_events: 
         file_name (str): 插件的文件名。
         all_events (Dict[str, Dict[str, Any]]): 存储所有事件信息的全局字典。
     """
+
     def update_event_dict(event_key: str, module_name: str, event_object: Any):
         """更新全局事件字典"""
         if event_key not in all_events:
@@ -46,27 +47,6 @@ def process_event(event_key: str, event_value: Any, file_name: str, all_events: 
         logger.error(f"无法获取模块属性: {e}")
 
 
-def process_plugin_events(events: Dict[str, Any], file_name: str) -> None:
-    """
-    处理插件的事件部分，将需要执行的函数或类存储在全局字典中。
-
-    Args:
-        events (Dict[str, Any]): 插件定义的事件。
-        file_name (str): 插件的文件名。
-    """
-
-    for event_key, event_value in events.items():
-        if event_key == "on_load":
-            # 处理 on_load 事件并存储到对应的全局字典中
-            process_event(event_key, event_value, file_name, all_events)
-        elif event_key == "on_enable":
-            # 处理 on_enable 事件并存储到对应的全局字典中
-            process_event(event_key, event_value, file_name, all_events)
-        elif event_key == "on_disable":
-            # 处理 on_disable 事件并存储到对应的全局字典中
-            process_event(event_key, event_value, file_name, all_events)
-
-
 def process_plugin_args(need_args, kwargs):
     """
     处理插件需要获取的程序变量和函数。
@@ -79,19 +59,13 @@ def process_plugin_args(need_args, kwargs):
         Tuple[Dict, Dict]: 包含需要的变量和函数的字典。
     """
     call_vars = {}
-    call_funcs = {}
-    need_vars = need_args.get('need_vars', [])
-    need_funcs = need_args.get('need_funcs', [])
+    if need_args is not None:
+        need_vars = need_args.get('need_vars', [])
+        for var_name in need_vars:
+            if var_name in kwargs["global_vars"]:
+                call_vars[var_name] = kwargs["global_vars"][var_name]
 
-    for var_name in need_vars:
-        if var_name in kwargs["global_vars"]:
-            call_vars[var_name] = kwargs["global_vars"][var_name]
-
-    for func_name in need_funcs:
-        if func_name in kwargs["funcs"]:
-            call_funcs[func_name] = kwargs["funcs"][func_name]
-
-    return call_vars, call_funcs
+    return call_vars
 
 
 def process_thread_class(thread_class, target_func, page, need_vars):
@@ -140,31 +114,34 @@ def initialize_plugin(name, page, **kwargs):
     for plugin in Pluginlist:
         if plugin.on == name:
 
-            load_info = f"正在加载{plugin.name}"
-            logger.info(f"{load_info:=^30}")
-            logger.info(f"插件信息:")
+            load_info = f"加载插件:{plugin.name}"
+            logger.info(f"{load_info:=^50}")
+            logger.info(f"插件描述:{plugin.description}")
             logger.info(f"插件版本:{plugin.version}")
             logger.info(f"插件作者:{plugin.author}")
             logger.info(f"入口点文件:{plugin.file}")
 
             use_thread_class = False
-            target_func = plugin.on_load
-            target_thread_class = None
-            need_page = False
+            if isinstance(plugin.on_load, typing.Callable):
+                target_func = plugin.on_load
+            else:
+                m = importlib.import_module('Plugins.' + os.path.basename(plugin.file).split('.')[0])
+                target_func = getattr(m, plugin.on_load, None)
+            target_thread_class = plugin.thread_class
 
             # 处理插件需要获取的程序变量和函数
-            need_args = getattr(plugin, "args", {})
-            call_vars, call_funcs = process_plugin_args(need_args, kwargs)
-
-            process_plugin_events(plugin.events, plugin.file)
+            need_args = result if (result := getattr(plugin, "args")) is not None else {}
+            call_vars = process_plugin_args(need_args, kwargs)
+            # for event_key in ["on_load", "on_unload", "on_enable", "on_disable"]:
+            #     process_event(event_key, getattr(plugin, event_key), os.path.basename(plugin.file).split('.')[0],
+            #                   all_events)
             need_page = plugin.need_page
             if plugin.multi_thread:
-                thread_class = plugin.thread_class
-                if hasattr(thread_class, "run"):
-                    target_thread_class = thread_class
+                if hasattr(target_thread_class, "run"):
+                    target_thread_class = target_thread_class
                     use_thread_class = True
                 else:
-                    logger.error(f"指定的对象{thread_class}没有run方法")
+                    logger.error(f"指定的对象{target_thread_class.name}({target_thread_class})没有run方法")
 
                     # 处理完成,准备调用
             if use_thread_class is False:
@@ -173,9 +150,10 @@ def initialize_plugin(name, page, **kwargs):
                     target_func(**call_vars)
                 else:
                     target_func(page, **call_vars)
-            else:
+            elif use_thread_class and target_thread_class is not None:
                 logger.debug("检测到使用了thread类")
                 process_thread_class(target_thread_class, target_func, page, call_vars)
 
-    lib.pubvars.PubVars.plugin_list = Pluginlist
+            logger.info(f"{load_info:=^50}")
 
+    lib.pubvars.PubVars.plugin_list = Pluginlist

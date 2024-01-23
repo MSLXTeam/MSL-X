@@ -8,20 +8,16 @@ from re import search
 from typing import List, Optional
 
 from Plugins.tools.EventTools import EventHandler
-from Plugins.tools.InfoClasses import MSLXEvents
-from Plugins.tools.InfoClasses import UniversalInfo, InfoTypes
+from Plugins.tools.InfoClasses import MSLXEvents, PluginInfo, EventHandlerInfo
 from Plugins.tools.PluginTools import AddPluginInfo
 
 sys.path.append("..")
 from lib.log import logger
 
-plugin_info = UniversalInfo(type_of_info=InfoTypes.Plugin, name="search_java_like_mcsl", author="MojaveHao",
-                            description="Allows use of MCSL-style Java detectors via this plugin", version="1.0.0",
-                            need_page=False)
+plugin_info = PluginInfo(name="search_java_like_mcsl", author="MojaveHao",
+                         description="Allows use of MCSL-style Java detectors via this plugin", version="1.0.0")
 
-handler_info = UniversalInfo(type_of_info=InfoTypes.EventHandler, name="search_java_like_mcsl", author="MojaveHao",
-                             description="Allows use of MCSL-style Java detectors via this plugin", version="1.0.0",
-                             need_page=False, on=MSLXEvents.SearchJavaEvent)
+handler_info = EventHandlerInfo(name="search_java_like_mcsl", author="MojaveHao", on=MSLXEvents.SearchJavaEvent)
 
 # 定义关键词和排除关键词集合，便于快速查找
 matchKeywords = {

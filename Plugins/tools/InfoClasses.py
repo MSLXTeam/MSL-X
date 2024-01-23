@@ -1,4 +1,4 @@
-import inspect
+import typing
 from enum import Enum
 from threading import Thread
 from typing import Optional, Union
@@ -42,10 +42,31 @@ class UniversalInfo:  # 通用信息类
     def __init__(self, type_of_info: Union[str, InfoTypes], name: str = "Anonymous", author: str = "Anonymous",
                  description: str = "",
                  on: Union[str, MSLXEvents] = "main",
-                 version: str = "1.0.0", need_page: Optional[bool] = False, args: Optional[dict] = {},
-                 multi_thread: Optional[bool] = False, thread_class: Optional[Thread] = None,
-                 file: Optional[str] = inspect.currentframe().f_back.f_code.co_filename,
-                 events: Optional[dict] = {}):
+                 version: str = "1.0.0", need_page: Optional[bool] = False, args: Optional[dict] = None):
+        self.type = ""
+        self.name = name
+        self.author = author
+        self.description = description
+        self.version = version
+        self.need_page = need_page
+        self.args = args
+        self.on = on
+        self.need_args = []
+        if isinstance(type_of_info, MSLXEvents):
+            self.type = type_of_info.value
+        else:
+            self.type = type_of_info
+
+
+class PluginInfo(UniversalInfo):  # 插件信息类,继承自通用信息类
+    def __init__(self, name: str = "Anonymous", author: str = "Anonymous",
+                 description: str = "", on: Union[str, MSLXEvents] = "main", version: str = "1.0.0",
+                 need_page: Optional[bool] = False, args: Optional[dict] = None, multi_thread: Optional[bool] = False,
+                 thread_class: Optional[Thread] = None,
+                 file: Optional[str] = "",
+                 on_enable: Union[str, typing.Callable] = "", on_disable: Union[str, typing.Callable] = "",
+                 on_load: Union[str, typing.Callable] = "", on_unload: Union[str, typing.Callable] = ""):
+        super().__init__(InfoTypes.Plugin, name, author, description, on, version, need_page, args)
         self.type = ""
         self.name = name
         self.author = author
@@ -58,22 +79,24 @@ class UniversalInfo:  # 通用信息类
         self.on = on
         self.file = file
         self.need_args = []
-        self.events = events
-        self.on_load = None
-        self.on_unload = None
-        self.on_enable = None
-        self.on_disable = None
-        if "need_vars" in args.keys():
+        self.on_load = on_load
+        self.on_unload = on_unload
+        self.on_enable = on_enable
+        self.on_disable = on_disable
+        if args is not None and "need_vars" in args.keys():
             self.need_args = args["need_args"]
-        if "on_load" in events.keys():
-            self.on_load = events["on_load"]
-        if "on_unload" in events.keys():
-            self.on_unload = events["on_unload"]
-        if "on_enable" in events.keys():
-            self.on_enable = events["on_enable"]
-        if "on_disable" in events.keys():
-            self.on_disable = events["on_disable"]
-        if isinstance(type_of_info, MSLXEvents):
-            self.type = type_of_info.value
-        else:
-            self.type = type_of_info
+
+
+class EventHandlerInfo(UniversalInfo):
+    def __init__(self, name: str = "Anonymous", author: str = "Anonymous",
+                 on: Union[str, MSLXEvents] = "main",
+                 need_page: Optional[bool] = False, args: Optional[dict] = None):
+        super().__init__(InfoTypes.EventHandler.value, name, author, "EventHandler", on,
+                         "Unavailable", need_page, args)
+        self.type = ""
+        self.name = name
+        self.author = author
+        self.need_page = need_page
+        self.args = args
+        self.on = on
+        self.need_args = []

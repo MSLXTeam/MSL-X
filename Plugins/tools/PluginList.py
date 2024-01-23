@@ -1,3 +1,3 @@
 from typing import List
-from .InfoClasses import UniversalInfo
-Pluginlist:List[UniversalInfo] = []
+from .InfoClasses import PluginInfo
+Pluginlist:List[PluginInfo] = []

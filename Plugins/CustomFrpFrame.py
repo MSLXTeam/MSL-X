@@ -8,7 +8,7 @@ from flet import (
 from loguru import logger
 
 # from Plugins.tools.PluginList import MSLXEvents, EventHandler, PluginInfo, AddPluginInfo
-from Plugins.tools.InfoClasses import UniversalInfo, InfoTypes, MSLXEvents
+from Plugins.tools.InfoClasses import PluginInfo, EventHandlerInfo, MSLXEvents
 from Plugins.tools.PluginTools import AddPluginInfo
 from Plugins.tools.EventTools import EventHandler
 
@@ -20,18 +20,16 @@ add_name = ""
 custom_page = None
 
 
-@AddPluginInfo(UniversalInfo(type_of_info=InfoTypes.Plugin, name="CustomFrp", author="MojaveHao",
-                             description="自定义Frp的前置框架", version="0.0.1",
-                             need_page=True))
+@AddPluginInfo(PluginInfo(name="CustomFrp", author="MojaveHao",
+                          description="自定义Frp的前置框架", version="0.0.1",
+                          need_page=True))
 def pluginload(page: 'Page'):
     logger.debug("CustomFrpFrame已加载")
     global custom_page
     custom_page = page
 
 
-@EventHandler(UniversalInfo(type_of_info=InfoTypes.EventHandler, name="CustomFrp", author="MojaveHao",
-                            description="自定义Frp的前置框架", version="0.0.1", on=MSLXEvents.SelectFrpcPageEvent,
-                            need_page=True))
+@EventHandler(EventHandlerInfo(name="CustomFrp", author="MojaveHao", on=MSLXEvents.SelectFrpcPageEvent, need_page=True))
 def customFrpcPage():
     logger.debug("customFrpcPage已被调用")
     global custom_page
